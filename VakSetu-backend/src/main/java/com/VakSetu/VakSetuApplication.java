@@ -1,0 +1,13 @@
+package com.VakSetu;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class VakSetuApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(VakSetuApplication.class, args);
+	}
+
+}
