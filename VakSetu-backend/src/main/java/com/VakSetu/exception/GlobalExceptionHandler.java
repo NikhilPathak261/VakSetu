@@ -1,9 +1,10 @@
 package com.vaksetu.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
+import com.vaksetu.common.dto.ErrorResponse;
 import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,41 +14,41 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleResourceNotFoundException(
-            ResourceNotFoundException exception,
-            HttpServletRequest request
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
+            ResourceNotFoundException exception
     ) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiErrorResponse> handleBadRequestException(
-            BadRequestException exception,
-            HttpServletRequest request
+    public ResponseEntity<ErrorResponse> handleBadRequestException(
+            BadRequestException exception
     ) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ApiErrorResponse> handleUnauthorizedException(
-            UnauthorizedException exception,
-            HttpServletRequest request
+    public ResponseEntity<ErrorResponse> handleUnauthorizedException(
+            UnauthorizedException exception
     ) {
-        return buildErrorResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), request);
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
 
     @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ApiErrorResponse> handleConflictException(
-            ConflictException exception,
-            HttpServletRequest request
+    public ResponseEntity<ErrorResponse> handleConflictException(
+            ConflictException exception
     ) {
-        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request);
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException() {
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleMethodArgumentNotValidException(
-            MethodArgumentNotValidException exception,
-            HttpServletRequest request
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException exception
     ) {
         String message = exception.getBindingResult()
                 .getFieldErrors()
@@ -56,29 +57,23 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .orElse("Validation failed");
 
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleException(
-            Exception exception,
-            HttpServletRequest request
-    ) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), request);
+    public ResponseEntity<ErrorResponse> handleException() {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
     }
 
-    private ResponseEntity<ApiErrorResponse> buildErrorResponse(
+    private ResponseEntity<ErrorResponse> buildErrorResponse(
             HttpStatus status,
-            String message,
-            HttpServletRequest request
+            String message
     ) {
-        ApiErrorResponse response = ApiErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .error(status.getReasonPhrase())
-                .message(message)
-                .path(request.getRequestURI())
-                .build();
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                status.value(),
+                message
+        );
 
         return ResponseEntity.status(status).body(response);
     }

@@ -8,6 +8,9 @@ import com.vaksetu.auth.entity.RefreshToken;
 import com.vaksetu.auth.repository.RefreshTokenRepository;
 import com.vaksetu.common.enums.Rank;
 import com.vaksetu.common.enums.Role;
+import com.vaksetu.exception.ConflictException;
+import com.vaksetu.exception.ResourceNotFoundException;
+import com.vaksetu.exception.UnauthorizedException;
 import com.vaksetu.security.JwtTokenProvider;
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.entity.UserSkill;
@@ -32,7 +35,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already registered");
+            throw new ConflictException("Email already registered");
         }
 
         User user = User.builder()
@@ -81,10 +84,10 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new UnauthorizedException("Invalid credentials");
         }
 
         String accessToken = jwtTokenProvider.generateAccessToken(user);
@@ -101,15 +104,15 @@ public class AuthService {
 
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         RefreshToken storedRefreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new ResourceNotFoundException("Refresh token not found"));
 
         if (storedRefreshToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Refresh token expired");
+            throw new UnauthorizedException("Refresh token expired");
         }
 
         if (Boolean.TRUE.equals(storedRefreshToken.getRevoked())
                 || !jwtTokenProvider.validateToken(request.getRefreshToken())) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new UnauthorizedException("Invalid refresh token");
         }
 
         User user = storedRefreshToken.getUser();
