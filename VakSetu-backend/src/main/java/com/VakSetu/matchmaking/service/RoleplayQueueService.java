@@ -11,7 +11,6 @@ import com.vaksetu.user.repository.UserSkillRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,11 +47,12 @@ public class RoleplayQueueService {
         queue.remove(userId);
     }
 
-    public Optional<RoleplayQueueEntry> findCandidate(Long userId) {
-        return queue.values()
-                .stream()
-                .filter(candidate -> !candidate.getUserId().equals(userId))
-                .findFirst();
+    public void removeMatchedUsers(
+            Long userAId,
+            Long userBId
+    ) {
+        queue.remove(userAId);
+        queue.remove(userBId);
     }
 
     public Collection<RoleplayQueueEntry> getAllEntries() {

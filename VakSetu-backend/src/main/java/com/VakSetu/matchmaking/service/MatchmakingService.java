@@ -8,7 +8,9 @@ import com.vaksetu.matchmaking.queue.RoleplayQueueEntry;
 import com.vaksetu.matchmaking.repository.MatchHistoryRepository;
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.repository.UserRepository;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,50 +23,76 @@ public class MatchmakingService {
     private final MatchHistoryRepository matchHistoryRepository;
     private final UserRepository userRepository;
     private final MatchScoreCalculator matchScoreCalculator;
+    private final ReentrantLock matchmakingLock = new ReentrantLock();
 
     public Optional<DebateQueueEntry> findDebateMatch(
             Long userId,
             Long topicId
     ) {
-        Optional<DebateQueueEntry> candidate = debateQueueService.findCandidate(userId, topicId);
+        matchmakingLock.lock();
 
-        if (candidate.isEmpty()) {
-            return Optional.empty();
+        try {
+            DebateQueueEntry userEntry = findDebateQueueEntry(userId);
+            Optional<DebateQueueEntry> candidate = debateQueueService.getAllEntries()
+                    .stream()
+                    .filter(entry -> !entry.getUserId().equals(userId))
+                    .filter(entry -> entry.getTopicId().equals(topicId))
+                    .filter(entry -> isOverallCompatible(userEntry, entry))
+                    .max(Comparator.comparingDouble(entry -> matchScoreCalculator.calculateScore(
+                            userEntry.getSkillSnapshot(),
+                            entry.getSkillSnapshot()
+                    )));
+
+            if (candidate.isEmpty()) {
+                return Optional.empty();
+            }
+
+            DebateQueueEntry candidateEntry = candidate.get();
+            double matchScore = matchScoreCalculator.calculateScore(
+                    userEntry.getSkillSnapshot(),
+                    candidateEntry.getSkillSnapshot()
+            );
+
+            debateQueueService.removeMatchedUsers(userId, candidateEntry.getUserId());
+            saveMatchHistory(userId, candidateEntry.getUserId(), SessionType.DEBATE, matchScore);
+
+            return candidate;
+        } finally {
+            matchmakingLock.unlock();
         }
-
-        DebateQueueEntry userEntry = findDebateQueueEntry(userId);
-        DebateQueueEntry candidateEntry = candidate.get();
-        double matchScore = matchScoreCalculator.calculateScore(
-                userEntry.getSkillSnapshot(),
-                candidateEntry.getSkillSnapshot()
-        );
-
-        debateQueueService.removeUser(userId);
-        debateQueueService.removeUser(candidateEntry.getUserId());
-        saveMatchHistory(userId, candidateEntry.getUserId(), SessionType.DEBATE, matchScore);
-
-        return candidate;
     }
 
     public Optional<RoleplayQueueEntry> findRoleplayMatch(Long userId) {
-        Optional<RoleplayQueueEntry> candidate = roleplayQueueService.findCandidate(userId);
+        matchmakingLock.lock();
 
-        if (candidate.isEmpty()) {
-            return Optional.empty();
+        try {
+            RoleplayQueueEntry userEntry = findRoleplayQueueEntry(userId);
+            Optional<RoleplayQueueEntry> candidate = roleplayQueueService.getAllEntries()
+                    .stream()
+                    .filter(entry -> !entry.getUserId().equals(userId))
+                    .filter(entry -> isOverallCompatible(userEntry, entry))
+                    .max(Comparator.comparingDouble(entry -> matchScoreCalculator.calculateScore(
+                            userEntry.getSkillSnapshot(),
+                            entry.getSkillSnapshot()
+                    )));
+
+            if (candidate.isEmpty()) {
+                return Optional.empty();
+            }
+
+            RoleplayQueueEntry candidateEntry = candidate.get();
+            double matchScore = matchScoreCalculator.calculateScore(
+                    userEntry.getSkillSnapshot(),
+                    candidateEntry.getSkillSnapshot()
+            );
+
+            roleplayQueueService.removeMatchedUsers(userId, candidateEntry.getUserId());
+            saveMatchHistory(userId, candidateEntry.getUserId(), SessionType.ROLEPLAY, matchScore);
+
+            return candidate;
+        } finally {
+            matchmakingLock.unlock();
         }
-
-        RoleplayQueueEntry userEntry = findRoleplayQueueEntry(userId);
-        RoleplayQueueEntry candidateEntry = candidate.get();
-        double matchScore = matchScoreCalculator.calculateScore(
-                userEntry.getSkillSnapshot(),
-                candidateEntry.getSkillSnapshot()
-        );
-
-        roleplayQueueService.removeUser(userId);
-        roleplayQueueService.removeUser(candidateEntry.getUserId());
-        saveMatchHistory(userId, candidateEntry.getUserId(), SessionType.ROLEPLAY, matchScore);
-
-        return candidate;
     }
 
     private void saveMatchHistory(
@@ -102,5 +130,21 @@ public class MatchmakingService {
                 .filter(entry -> entry.getUserId().equals(userId))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Roleplay queue entry not found"));
+    }
+
+    private boolean isOverallCompatible(
+            DebateQueueEntry first,
+            DebateQueueEntry second
+    ) {
+        return Math.abs(first.getSkillSnapshot().getOverallScore()
+                - second.getSkillSnapshot().getOverallScore()) <= 15;
+    }
+
+    private boolean isOverallCompatible(
+            RoleplayQueueEntry first,
+            RoleplayQueueEntry second
+    ) {
+        return Math.abs(first.getSkillSnapshot().getOverallScore()
+                - second.getSkillSnapshot().getOverallScore()) <= 15;
     }
 }
