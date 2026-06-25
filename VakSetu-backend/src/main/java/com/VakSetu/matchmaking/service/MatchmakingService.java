@@ -1,6 +1,8 @@
 package com.vaksetu.matchmaking.service;
 
 import com.vaksetu.common.enums.SessionType;
+import com.vaksetu.debate.dto.CreateDebateSessionRequest;
+import com.vaksetu.debate.service.DebateSessionService;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.matchmaking.entity.MatchHistory;
 import com.vaksetu.matchmaking.queue.DebateQueueEntry;
@@ -23,6 +25,7 @@ public class MatchmakingService {
     private final MatchHistoryRepository matchHistoryRepository;
     private final UserRepository userRepository;
     private final MatchScoreCalculator matchScoreCalculator;
+    private final DebateSessionService debateSessionService;
     private final ReentrantLock matchmakingLock = new ReentrantLock();
 
     public Optional<DebateQueueEntry> findDebateMatch(
@@ -55,6 +58,11 @@ public class MatchmakingService {
 
             debateQueueService.removeMatchedUsers(userId, candidateEntry.getUserId());
             saveMatchHistory(userId, candidateEntry.getUserId(), SessionType.DEBATE, matchScore);
+            debateSessionService.createSession(CreateDebateSessionRequest.builder()
+                    .topicId(topicId)
+                    .participantAId(userId)
+                    .participantBId(candidateEntry.getUserId())
+                    .build());
 
             return candidate;
         } finally {

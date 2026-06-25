@@ -60,6 +60,26 @@ public class DebateSession extends BaseEntity {
     @Column(nullable = false)
     private SessionStatus status;
 
+    @Column(nullable = false)
+    private Integer currentRound;
+
+    @Column(nullable = false)
+    private Integer totalRounds;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_speaker_id")
+    private User currentSpeaker;
+
+    @Column(nullable = false)
+    private Integer preparationSeconds;
+
+    @Column(nullable = false)
+    private Integer roundDurationSeconds;
+
+    private LocalDateTime roundStartTime;
+
+    private LocalDateTime roundEndTime;
+
     private LocalDateTime startTime;
 
     private LocalDateTime endTime;

@@ -8,4 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface DebateSessionRepository extends JpaRepository<DebateSession, Long> {
 
     List<DebateSession> findByStatus(SessionStatus status);
+
+    List<DebateSession> findByParticipantAId(Long userId);
+
+    List<DebateSession> findByParticipantBId(Long userId);
 }

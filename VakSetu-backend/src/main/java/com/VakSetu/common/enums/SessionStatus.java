@@ -1,13 +1,11 @@
 package com.vaksetu.common.enums;
 
 public enum SessionStatus {
-    WAITING,
     MATCHED,
     PREPARATION,
-    ACTIVE,
-    EVALUATION,
+    ROUND_1,
+    ROUND_2,
+    ROUND_3,
     COMPLETED,
-    CANCELLED,
-    ABANDONED,
-    CLOSED
+    CANCELLED
 }
