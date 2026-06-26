@@ -25,7 +25,8 @@ public final class AppConstants {
     public static final Integer ELITE_CONTRIBUTOR_THRESHOLD = 30;
     public static final Integer COMMUNITY_VOICE_THRESHOLD = 50;
 
-    public static final Integer ROLEPLAY_PREPARATION_MINUTES = 4;
+    public static final Integer ROLEPLAY_PREPARATION_SECONDS = 180;
+    public static final Integer ROLEPLAY_SESSION_DURATION_SECONDS = 900;
 
     private AppConstants() {
     }

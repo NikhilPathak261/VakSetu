@@ -8,6 +8,8 @@ import com.vaksetu.matchmaking.entity.MatchHistory;
 import com.vaksetu.matchmaking.queue.DebateQueueEntry;
 import com.vaksetu.matchmaking.queue.RoleplayQueueEntry;
 import com.vaksetu.matchmaking.repository.MatchHistoryRepository;
+import com.vaksetu.roleplay.dto.CreateRoleplaySessionRequest;
+import com.vaksetu.roleplay.service.RoleplaySessionService;
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.repository.UserRepository;
 import java.util.Comparator;
@@ -26,6 +28,7 @@ public class MatchmakingService {
     private final UserRepository userRepository;
     private final MatchScoreCalculator matchScoreCalculator;
     private final DebateSessionService debateSessionService;
+    private final RoleplaySessionService roleplaySessionService;
     private final ReentrantLock matchmakingLock = new ReentrantLock();
 
     public Optional<DebateQueueEntry> findDebateMatch(
@@ -96,6 +99,10 @@ public class MatchmakingService {
 
             roleplayQueueService.removeMatchedUsers(userId, candidateEntry.getUserId());
             saveMatchHistory(userId, candidateEntry.getUserId(), SessionType.ROLEPLAY, matchScore);
+            roleplaySessionService.createSession(CreateRoleplaySessionRequest.builder()
+                    .participantAId(userId)
+                    .participantBId(candidateEntry.getUserId())
+                    .build());
 
             return candidate;
         } finally {

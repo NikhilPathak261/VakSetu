@@ -44,4 +44,8 @@ public class RoleplayScenario extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DifficultyLevel difficulty;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean active = true;
 }

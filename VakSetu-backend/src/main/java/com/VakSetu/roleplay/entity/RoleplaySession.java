@@ -56,6 +56,16 @@ public class RoleplaySession extends BaseEntity {
     @Column(nullable = false)
     private SessionStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SessionStatus currentPhase;
+
+    @Column(nullable = false)
+    private Integer preparationSeconds;
+
+    @Column(nullable = false)
+    private Integer sessionDurationSeconds;
+
     private LocalDateTime startTime;
 
     private LocalDateTime endTime;

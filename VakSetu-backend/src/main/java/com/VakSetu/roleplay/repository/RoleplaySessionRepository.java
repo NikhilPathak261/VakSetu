@@ -8,4 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RoleplaySessionRepository extends JpaRepository<RoleplaySession, Long> {
 
     List<RoleplaySession> findByStatus(SessionStatus status);
+
+    List<RoleplaySession> findByParticipantAId(Long userId);
+
+    List<RoleplaySession> findByParticipantBId(Long userId);
 }
