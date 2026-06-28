@@ -228,6 +228,40 @@ button:disabled {
   max-width: 280px;
 }
 
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.detail-grid article {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.detail-grid span {
+  color: #6b7280;
+}
+
+.detail-grid strong {
+  color: #111827;
+}
+
+.rating-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.inline-link {
+  width: fit-content;
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
   .app-shell,
   .auth-panel {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { websocketEvents } from '../../constants/websocket'
 import { useWebSocketEvents } from '../../hooks/useWebSocketEvents'
 import GDService from '../../services/GDService'
@@ -82,6 +83,7 @@ function GDLobbyPage() {
             <span>
               {room.currentParticipants}/{room.maxParticipants}
             </span>
+            <Link to={`/gd/room/${room.sessionId}`}>Open room</Link>
           </article>
         ))}
       </div>

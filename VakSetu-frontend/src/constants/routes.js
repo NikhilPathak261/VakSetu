@@ -4,6 +4,9 @@ export const routes = {
   dashboard: '/dashboard',
   profile: '/profile',
   debate: '/debate',
+  debateSession: '/debate/session',
   gd: '/gd',
+  gdRoom: '/gd/room',
   roleplay: '/roleplay',
+  roleplaySession: '/roleplay/session',
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { websocketEvents } from '../../constants/websocket'
 import { useWebSocketEvents } from '../../hooks/useWebSocketEvents'
 import MatchmakingService from '../../services/MatchmakingService'
@@ -10,6 +11,10 @@ function DebateLobbyPage() {
   const [topicId, setTopicId] = useState('')
   const [status, setStatus] = useState(null)
   const [error, setError] = useState('')
+  const matchedSessionId =
+    events[0]?.eventType === websocketEvents.matchFound && events[0]?.payload?.sessionType === 'DEBATE'
+      ? events[0].payload.sessionId
+      : null
 
   useEffect(() => {
     TopicService.getTopics()
@@ -21,7 +26,9 @@ function DebateLobbyPage() {
   }, [])
 
   useEffect(() => {
-    if (events[0]?.eventType === websocketEvents.matchFound) {
+    const latestEvent = events[0]
+
+    if (latestEvent?.eventType === websocketEvents.matchFound && latestEvent.payload?.sessionType === 'DEBATE') {
       MatchmakingService.getDebateStatus()
         .then(setStatus)
         .catch(() => {})
@@ -66,6 +73,11 @@ function DebateLobbyPage() {
           Leave
         </button>
       </div>
+      {matchedSessionId && (
+        <Link to={`/debate/session/${matchedSessionId}`} className="inline-link">
+          Open matched debate
+        </Link>
+      )}
       {status && <p className="muted">Queue size: {status.queueSize}</p>}
       {error && <p className="error-text">{error}</p>}
     </section>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { websocketEvents } from '../../constants/websocket'
 import { useWebSocketEvents } from '../../hooks/useWebSocketEvents'
 import MatchmakingService from '../../services/MatchmakingService'
@@ -7,6 +8,10 @@ function RoleplayLobbyPage() {
   const { events } = useWebSocketEvents()
   const [status, setStatus] = useState(null)
   const [error, setError] = useState('')
+  const matchedSessionId =
+    events[0]?.eventType === websocketEvents.matchFound && events[0]?.payload?.sessionType === 'ROLEPLAY'
+      ? events[0].payload.sessionId
+      : null
 
   async function refreshStatus() {
     setStatus(await MatchmakingService.getRoleplayStatus())
@@ -19,7 +24,9 @@ function RoleplayLobbyPage() {
   }, [])
 
   useEffect(() => {
-    if (events[0]?.eventType === websocketEvents.matchFound) {
+    const latestEvent = events[0]
+
+    if (latestEvent?.eventType === websocketEvents.matchFound && latestEvent.payload?.sessionType === 'ROLEPLAY') {
       MatchmakingService.getRoleplayStatus()
         .then(setStatus)
         .catch(() => {})
@@ -56,6 +63,11 @@ function RoleplayLobbyPage() {
           Leave
         </button>
       </div>
+      {matchedSessionId && (
+        <Link to={`/roleplay/session/${matchedSessionId}`} className="inline-link">
+          Open matched roleplay
+        </Link>
+      )}
       {status && <p className="muted">Queue size: {status.queueSize}</p>}
       {error && <p className="error-text">{error}</p>}
     </section>

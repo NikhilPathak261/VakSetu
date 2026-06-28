@@ -2,6 +2,7 @@ package com.vaksetu.matchmaking.service;
 
 import com.vaksetu.common.enums.SessionType;
 import com.vaksetu.debate.dto.CreateDebateSessionRequest;
+import com.vaksetu.debate.dto.DebateSessionResponse;
 import com.vaksetu.debate.service.DebateSessionService;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.matchmaking.entity.MatchHistory;
@@ -9,6 +10,7 @@ import com.vaksetu.matchmaking.queue.DebateQueueEntry;
 import com.vaksetu.matchmaking.queue.RoleplayQueueEntry;
 import com.vaksetu.matchmaking.repository.MatchHistoryRepository;
 import com.vaksetu.roleplay.dto.CreateRoleplaySessionRequest;
+import com.vaksetu.roleplay.dto.RoleplaySessionResponse;
 import com.vaksetu.roleplay.service.RoleplaySessionService;
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.repository.UserRepository;
@@ -66,13 +68,14 @@ public class MatchmakingService {
 
             debateQueueService.removeMatchedUsers(userId, candidateEntry.getUserId());
             saveMatchHistory(userId, candidateEntry.getUserId(), SessionType.DEBATE, matchScore);
-            debateSessionService.createSession(CreateDebateSessionRequest.builder()
+            DebateSessionResponse session = debateSessionService.createSession(CreateDebateSessionRequest.builder()
                     .topicId(topicId)
                     .participantAId(userId)
                     .participantBId(candidateEntry.getUserId())
                     .build());
             eventPublisherService.publishMatchFound(Map.of(
                     "sessionType", SessionType.DEBATE,
+                    "sessionId", session.getId(),
                     "topicId", topicId,
                     "userAId", userId,
                     "userBId", candidateEntry.getUserId(),
@@ -112,12 +115,13 @@ public class MatchmakingService {
 
             roleplayQueueService.removeMatchedUsers(userId, candidateEntry.getUserId());
             saveMatchHistory(userId, candidateEntry.getUserId(), SessionType.ROLEPLAY, matchScore);
-            roleplaySessionService.createSession(CreateRoleplaySessionRequest.builder()
+            RoleplaySessionResponse session = roleplaySessionService.createSession(CreateRoleplaySessionRequest.builder()
                     .participantAId(userId)
                     .participantBId(candidateEntry.getUserId())
                     .build());
             eventPublisherService.publishMatchFound(Map.of(
                     "sessionType", SessionType.ROLEPLAY,
+                    "sessionId", session.getSessionId(),
                     "userAId", userId,
                     "userBId", candidateEntry.getUserId(),
                     "matchScore", matchScore

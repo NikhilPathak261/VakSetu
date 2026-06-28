@@ -6,8 +6,11 @@ import RegisterPage from './pages/auth/RegisterPage.jsx'
 import DashboardPage from './pages/dashboard/DashboardPage.jsx'
 import ProfilePage from './pages/profile/ProfilePage.jsx'
 import DebateLobbyPage from './pages/debate/DebateLobbyPage.jsx'
+import DebateSessionPage from './pages/debate/DebateSessionPage.jsx'
 import GDLobbyPage from './pages/gd/GDLobbyPage.jsx'
+import GDRoomPage from './pages/gd/GDRoomPage.jsx'
 import RoleplayLobbyPage from './pages/roleplay/RoleplayLobbyPage.jsx'
+import RoleplaySessionPage from './pages/roleplay/RoleplaySessionPage.jsx'
 import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import './App.css'
 
@@ -24,8 +27,11 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/debate" element={<DebateLobbyPage />} />
+          <Route path="/debate/session/:sessionId" element={<DebateSessionPage />} />
           <Route path="/gd" element={<GDLobbyPage />} />
+          <Route path="/gd/room/:sessionId" element={<GDRoomPage />} />
           <Route path="/roleplay" element={<RoleplayLobbyPage />} />
+          <Route path="/roleplay/session/:sessionId" element={<RoleplaySessionPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
