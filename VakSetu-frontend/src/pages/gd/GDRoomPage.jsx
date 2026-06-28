@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import EmptyState from '../../components/common/EmptyState'
+import LoadingBlock from '../../components/common/LoadingBlock'
 import { websocketEvents } from '../../constants/websocket'
 import { useWebSocketEvents } from '../../hooks/useWebSocketEvents'
 import GDService from '../../services/GDService'
@@ -12,6 +14,7 @@ function GDRoomPage() {
   const [receiverId, setReceiverId] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   async function loadRoom() {
     const [roomResponse, leaderboardResponse] = await Promise.all([
@@ -32,6 +35,7 @@ function GDRoomPage() {
         setLeaderboard(leaderboardResponse.leaderboard || [])
       })
       .catch((exception) => setError(exception.message))
+      .finally(() => setLoading(false))
   }, [sessionId])
 
   useEffect(() => {
@@ -108,6 +112,7 @@ function GDRoomPage() {
         <p className="eyebrow">GD Room</p>
         <h1>{room?.topic || 'Loading room'}</h1>
       </header>
+      {loading && <LoadingBlock label="Loading GD room" />}
       {room && (
         <div className="detail-grid">
           <article>
@@ -149,6 +154,9 @@ function GDRoomPage() {
         <button type="submit">Give star</button>
       </form>
       <div className="list-grid">
+        {!loading && leaderboard.length === 0 && (
+          <EmptyState title="No leaderboard yet" message="Stars will appear here after participants speak." />
+        )}
         {leaderboard.map((entry) => (
           <article key={entry.userId}>
             <strong>{entry.userName}</strong>

@@ -76,6 +76,24 @@
   font-size: 14px;
 }
 
+.state-text,
+.empty-state {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.empty-state {
+  display: grid;
+  gap: 6px;
+}
+
+.empty-state span,
+.state-text {
+  color: #6b7280;
+}
+
 .page-stack {
   display: grid;
   gap: 24px;

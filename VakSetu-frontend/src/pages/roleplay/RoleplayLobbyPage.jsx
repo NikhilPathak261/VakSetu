@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import LoadingBlock from '../../components/common/LoadingBlock'
 import { websocketEvents } from '../../constants/websocket'
 import { useWebSocketEvents } from '../../hooks/useWebSocketEvents'
 import MatchmakingService from '../../services/MatchmakingService'
@@ -8,6 +9,7 @@ function RoleplayLobbyPage() {
   const { events } = useWebSocketEvents()
   const [status, setStatus] = useState(null)
   const [error, setError] = useState('')
+  const [loadingStatus, setLoadingStatus] = useState(true)
   const matchedSessionId =
     events[0]?.eventType === websocketEvents.matchFound && events[0]?.payload?.sessionType === 'ROLEPLAY'
       ? events[0].payload.sessionId
@@ -21,6 +23,7 @@ function RoleplayLobbyPage() {
     MatchmakingService.getRoleplayStatus()
       .then(setStatus)
       .catch((exception) => setError(exception.message))
+      .finally(() => setLoadingStatus(false))
   }, [])
 
   useEffect(() => {
@@ -63,6 +66,7 @@ function RoleplayLobbyPage() {
           Leave
         </button>
       </div>
+      {loadingStatus && <LoadingBlock label="Loading queue status" />}
       {matchedSessionId && (
         <Link to={`/roleplay/session/${matchedSessionId}`} className="inline-link">
           Open matched roleplay

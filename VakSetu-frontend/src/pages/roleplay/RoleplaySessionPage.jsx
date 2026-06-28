@@ -1,23 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import FeedbackForm from '../../components/feedback/FeedbackForm'
+import EmptyState from '../../components/common/EmptyState'
+import LoadingBlock from '../../components/common/LoadingBlock'
 import { useAuth } from '../../hooks/useAuth'
 import RoleplayService from '../../services/RoleplayService'
 
 function RoleplaySessionPage() {
   const { sessionId } = useParams()
-  const { currentUser } = useAuth()
+  const { currentUser, refreshProfile } = useAuth()
   const [session, setSession] = useState(null)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   async function loadSession() {
     setSession(await RoleplayService.getSession(sessionId))
+  }
+
+  async function handleFeedbackSubmitted() {
+    await loadSession()
+    await refreshProfile()
   }
 
   useEffect(() => {
     RoleplayService.getSession(sessionId)
       .then(setSession)
       .catch((exception) => setError(exception.message))
+      .finally(() => setLoading(false))
   }, [sessionId])
 
   const partner = useMemo(() => {
@@ -52,6 +61,10 @@ function RoleplaySessionPage() {
         <p className="eyebrow">Roleplay Session</p>
         <h1>{session?.scenarioTitle || 'Loading roleplay'}</h1>
       </header>
+      {loading && <LoadingBlock label="Loading roleplay session" />}
+      {!loading && !session && (
+        <EmptyState title="Roleplay not found" message="Check the session link or wait for matchmaking." />
+      )}
       {session && (
         <>
           <p className="muted">{session.scenarioDescription}</p>
@@ -85,7 +98,7 @@ function RoleplaySessionPage() {
           sessionType="ROLEPLAY"
           targetUserId={partner.id}
           targetName={partner.name}
-          onSubmitted={loadSession}
+          onSubmitted={handleFeedbackSubmitted}
         />
       )}
       {error && <p className="error-text">{error}</p>}

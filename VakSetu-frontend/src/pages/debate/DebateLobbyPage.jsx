@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import EmptyState from '../../components/common/EmptyState'
+import LoadingBlock from '../../components/common/LoadingBlock'
 import { websocketEvents } from '../../constants/websocket'
 import { useWebSocketEvents } from '../../hooks/useWebSocketEvents'
 import MatchmakingService from '../../services/MatchmakingService'
@@ -11,6 +13,7 @@ function DebateLobbyPage() {
   const [topicId, setTopicId] = useState('')
   const [status, setStatus] = useState(null)
   const [error, setError] = useState('')
+  const [loadingTopics, setLoadingTopics] = useState(true)
   const matchedSessionId =
     events[0]?.eventType === websocketEvents.matchFound && events[0]?.payload?.sessionType === 'DEBATE'
       ? events[0].payload.sessionId
@@ -20,6 +23,7 @@ function DebateLobbyPage() {
     TopicService.getTopics()
       .then(setTopics)
       .catch((exception) => setError(exception.message))
+      .finally(() => setLoadingTopics(false))
     MatchmakingService.getDebateStatus()
       .then(setStatus)
       .catch(() => {})
@@ -73,6 +77,10 @@ function DebateLobbyPage() {
           Leave
         </button>
       </div>
+      {loadingTopics && <LoadingBlock label="Loading topics" />}
+      {!loadingTopics && topics.length === 0 && (
+        <EmptyState title="No topics yet" message="Ask an admin to add debate topics before joining a queue." />
+      )}
       {matchedSessionId && (
         <Link to={`/debate/session/${matchedSessionId}`} className="inline-link">
           Open matched debate

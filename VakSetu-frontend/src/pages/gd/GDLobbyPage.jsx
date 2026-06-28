@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import EmptyState from '../../components/common/EmptyState'
+import LoadingBlock from '../../components/common/LoadingBlock'
 import { websocketEvents } from '../../constants/websocket'
 import { useWebSocketEvents } from '../../hooks/useWebSocketEvents'
 import GDService from '../../services/GDService'
@@ -9,6 +11,7 @@ function GDLobbyPage() {
   const [rooms, setRooms] = useState([])
   const [form, setForm] = useState({ topic: '', maxParticipants: 10 })
   const [error, setError] = useState('')
+  const [loadingRooms, setLoadingRooms] = useState(true)
 
   async function loadRooms() {
     setRooms(await GDService.getActiveRooms())
@@ -18,6 +21,7 @@ function GDLobbyPage() {
     GDService.getActiveRooms()
       .then(setRooms)
       .catch((exception) => setError(exception.message))
+      .finally(() => setLoadingRooms(false))
   }, [])
 
   useEffect(() => {
@@ -76,6 +80,10 @@ function GDLobbyPage() {
         <button type="submit">Create</button>
       </form>
       {error && <p className="error-text">{error}</p>}
+      {loadingRooms && <LoadingBlock label="Loading GD rooms" />}
+      {!loadingRooms && rooms.length === 0 && (
+        <EmptyState title="No active rooms" message="Create a room to start a group discussion." />
+      )}
       <div className="list-grid">
         {rooms.map((room) => (
           <article key={room.sessionId}>

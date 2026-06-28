@@ -37,6 +37,12 @@ export function AuthProvider({ children }) {
     setAuthLoading(false)
   }, [])
 
+  const refreshProfile = useCallback(async () => {
+    const profile = await UserService.getProfile()
+    setCurrentUser(profile)
+    return profile
+  }, [])
+
   useEffect(() => {
     let active = true
 
@@ -75,8 +81,9 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      refreshProfile,
     }),
-    [accessToken, currentUser, authLoading, login, register, logout],
+    [accessToken, currentUser, authLoading, login, register, logout, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
