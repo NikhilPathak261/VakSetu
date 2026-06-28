@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SkillHistoryRepository extends JpaRepository<SkillHistory, Long> {
 
     List<SkillHistory> findByUserId(Long userId);
+
+    List<SkillHistory> findTop50ByUserIdOrderByCreatedAtDesc(Long userId);
 }
