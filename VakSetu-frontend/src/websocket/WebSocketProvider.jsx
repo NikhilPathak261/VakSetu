@@ -20,6 +20,33 @@ export function WebSocketProvider({ children }) {
     setEvents([])
   }, [])
 
+  const subscribe = useCallback((topic, handler) => {
+    const client = clientRef.current
+
+    if (!client?.connected) {
+      return () => {}
+    }
+
+    const subscription = client.subscribe(topic, (message) => {
+      handler(JSON.parse(message.body))
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const publish = useCallback((destination, payload) => {
+    const client = clientRef.current
+
+    if (!client?.connected) {
+      throw new Error('Realtime connection is not ready')
+    }
+
+    client.publish({
+      destination,
+      body: JSON.stringify(payload),
+    })
+  }, [])
+
   useEffect(() => {
     if (!isAuthenticated || !accessToken) {
       return undefined
@@ -30,7 +57,7 @@ export function WebSocketProvider({ children }) {
       () => {
         setConnected(true)
 
-        Object.values(websocketTopics).forEach((topic) => {
+        Object.values(websocketTopics).filter((topic) => typeof topic === 'string').forEach((topic) => {
           client.subscribe(topic, (message) => {
             try {
               addEvent(JSON.parse(message.body))
@@ -62,8 +89,10 @@ export function WebSocketProvider({ children }) {
       connected,
       events,
       clearEvents,
+      subscribe,
+      publish,
     }),
-    [connected, events, clearEvents],
+    [connected, events, clearEvents, subscribe, publish],
   )
 
   return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>

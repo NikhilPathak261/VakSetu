@@ -140,7 +140,8 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #d1d5db;
@@ -149,6 +150,15 @@ select {
   color: #111827;
   background: #ffffff;
   font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+code {
+  color: #111827;
+  overflow-wrap: anywhere;
 }
 
 button {

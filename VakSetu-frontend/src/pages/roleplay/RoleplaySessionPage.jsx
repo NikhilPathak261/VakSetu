@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import FeedbackForm from '../../components/feedback/FeedbackForm'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
+import WebRtcSignalingPanel from '../../components/webrtc/WebRtcSignalingPanel'
 import { useAuth } from '../../hooks/useAuth'
 import RoleplayService from '../../services/RoleplayService'
 
@@ -93,13 +94,16 @@ function RoleplaySessionPage() {
         </button>
       </div>
       {partner && (
-        <FeedbackForm
-          sessionId={Number(sessionId)}
-          sessionType="ROLEPLAY"
-          targetUserId={partner.id}
-          targetName={partner.name}
-          onSubmitted={handleFeedbackSubmitted}
-        />
+        <>
+          <WebRtcSignalingPanel sessionId={sessionId} sessionType="ROLEPLAY" partner={partner} />
+          <FeedbackForm
+            sessionId={Number(sessionId)}
+            sessionType="ROLEPLAY"
+            targetUserId={partner.id}
+            targetName={partner.name}
+            onSubmitted={handleFeedbackSubmitted}
+          />
+        </>
       )}
       {error && <p className="error-text">{error}</p>}
     </section>
