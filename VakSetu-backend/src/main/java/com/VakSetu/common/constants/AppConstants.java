@@ -11,7 +11,7 @@ public final class AppConstants {
     public static final Integer MAX_SKILL_SCORE = 100;
     public static final Integer MIN_SKILL_SCORE = 0;
 
-    public static final Integer MAX_GD_PARTICIPANTS = 100;
+    public static final int MAX_GD_PARTICIPANTS = 100;
 
     public static final Integer SESSION_REPUTATION_REWARD = 2;
     public static final Integer SESSION_ABANDONMENT_PENALTY = 10;

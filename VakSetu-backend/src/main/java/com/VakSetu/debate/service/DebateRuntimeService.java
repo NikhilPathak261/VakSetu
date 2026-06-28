@@ -78,13 +78,7 @@ public class DebateRuntimeService {
 
     @Transactional
     public DebateRuntimeResponse completeDebate(Long sessionId) {
-        DebateSession session = loadSession(sessionId);
-        validateStatus(session, SessionStatus.ROUND_3, "Cannot complete unless status is ROUND_3");
-
-        session.setStatus(SessionStatus.COMPLETED);
-        session.setEndTime(LocalDateTime.now());
-
-        return mapToRuntimeResponse(debateSessionRepository.save(session));
+        throw new BadRequestException("Submit required feedback to complete debate session");
     }
 
     @Transactional(readOnly = true)

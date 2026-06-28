@@ -92,14 +92,7 @@ public class RoleplaySessionService {
 
     @Transactional
     public RoleplaySessionResponse completeRoleplay(Long sessionId) {
-        RoleplaySession session = loadSession(sessionId);
-        validateStatus(session, SessionStatus.ACTIVE, "Cannot complete roleplay unless status is ACTIVE");
-
-        session.setStatus(SessionStatus.COMPLETED);
-        session.setCurrentPhase(SessionStatus.COMPLETED);
-        session.setEndTime(LocalDateTime.now());
-
-        return mapToResponse(roleplaySessionRepository.save(session));
+        throw new BadRequestException("Submit required feedback to complete roleplay session");
     }
 
     @Transactional(readOnly = true)

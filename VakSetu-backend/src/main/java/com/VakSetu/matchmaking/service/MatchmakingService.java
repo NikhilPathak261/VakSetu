@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class MatchmakingService {
     private final RoleplaySessionService roleplaySessionService;
     private final ReentrantLock matchmakingLock = new ReentrantLock();
 
+    @Transactional
     public Optional<DebateQueueEntry> findDebateMatch(
             Long userId,
             Long topicId
@@ -73,6 +75,7 @@ public class MatchmakingService {
         }
     }
 
+    @Transactional
     public Optional<RoleplayQueueEntry> findRoleplayMatch(Long userId) {
         matchmakingLock.lock();
 

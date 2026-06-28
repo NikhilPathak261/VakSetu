@@ -6,6 +6,7 @@ import com.vaksetu.debate.dto.CreateDebateSessionRequest;
 import com.vaksetu.debate.dto.DebateSessionResponse;
 import com.vaksetu.debate.entity.DebateSession;
 import com.vaksetu.debate.repository.DebateSessionRepository;
+import com.vaksetu.exception.BadRequestException;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.topic.entity.Topic;
 import com.vaksetu.topic.repository.TopicRepository;
@@ -80,12 +81,7 @@ public class DebateSessionService {
 
     @Transactional
     public DebateSessionResponse completeSession(Long sessionId) {
-        DebateSession session = loadSession(sessionId);
-        session.setStatus(SessionStatus.COMPLETED);
-        session.setEndTime(LocalDateTime.now());
-        DebateSession savedSession = debateSessionRepository.save(session);
-
-        return mapToResponse(savedSession);
+        throw new BadRequestException("Submit required feedback to complete debate session");
     }
 
     private DebateSession loadSession(Long sessionId) {

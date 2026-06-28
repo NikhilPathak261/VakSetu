@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface GDSessionRepository extends JpaRepository<GroupDiscussionSession, Long> {
 
     List<GroupDiscussionSession> findByStatus(SessionStatus status);
+
+    List<GroupDiscussionSession> findByCreatorId(Long creatorId);
 }
