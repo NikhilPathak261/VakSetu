@@ -269,6 +269,31 @@ button:disabled {
   color: #111827;
 }
 
+.history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.history-list article {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.history-list article div {
+  display: grid;
+  gap: 4px;
+}
+
+.history-list article span {
+  color: #6b7280;
+}
+
 .rating-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -297,5 +322,10 @@ button:disabled {
   .event-panel {
     border-left: 0;
     border-top: 1px solid #e5e7eb;
+  }
+
+  .history-list article {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

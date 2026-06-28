@@ -1,9 +1,49 @@
+import { useEffect, useState } from 'react'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
 import { useAuth } from '../../hooks/useAuth'
+import DashboardService from '../../services/DashboardService'
+
+const SKILLS = ['fluency', 'pronunciation', 'grammar', 'confidence', 'empathy', 'listening', 'engagement']
 
 function DashboardPage() {
   const { authLoading, currentUser, refreshProfile } = useAuth()
+  const [summary, setSummary] = useState(null)
+  const [skillHistory, setSkillHistory] = useState([])
+  const [reputationHistory, setReputationHistory] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!authLoading && currentUser) {
+      loadDashboard()
+    }
+  }, [authLoading, currentUser])
+
+  async function loadDashboard() {
+    setLoading(true)
+    setError('')
+
+    try {
+      const [summaryData, skillHistoryData, reputationHistoryData] = await Promise.all([
+        DashboardService.getSummary(),
+        DashboardService.getSkillHistory(),
+        DashboardService.getReputationHistory(),
+      ])
+
+      setSummary(summaryData)
+      setSkillHistory(skillHistoryData)
+      setReputationHistory(reputationHistoryData)
+    } catch (exception) {
+      setError(exception.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleRefresh() {
+    await Promise.all([refreshProfile(), loadDashboard()])
+  }
 
   if (authLoading) {
     return <LoadingBlock label="Loading dashboard" />
@@ -20,40 +60,112 @@ function DashboardPage() {
         <h1>{currentUser.name} progress</h1>
       </header>
       <div className="toolbar">
-        <button type="button" className="ghost-button" onClick={refreshProfile}>
-          Refresh profile
+        <button type="button" className="ghost-button" onClick={handleRefresh} disabled={loading}>
+          {loading ? 'Refreshing' : 'Refresh dashboard'}
         </button>
       </div>
+      {error && <p className="error-text">{error}</p>}
+      {loading && <LoadingBlock label="Loading progress data" />}
       <div className="stats-grid">
         <article>
           <span>Overall</span>
-          <strong>{currentUser.overallScore ?? '-'}</strong>
+          <strong>{summary?.overallScore ?? currentUser.overallScore ?? '-'}</strong>
         </article>
         <article>
           <span>Rank</span>
-          <strong>{currentUser.rank ?? '-'}</strong>
+          <strong>{summary?.rank ?? currentUser.rank ?? '-'}</strong>
         </article>
         <article>
           <span>Reputation</span>
-          <strong>{currentUser.reputation ?? '-'}</strong>
+          <strong>{summary?.reputation ?? currentUser.reputation ?? '-'}</strong>
         </article>
         <article>
           <span>Badge</span>
-          <strong>{currentUser.contributorBadge ?? 'NONE'}</strong>
+          <strong>{summary?.contributorBadge ?? currentUser.contributorBadge ?? 'NONE'}</strong>
         </article>
       </div>
       <div className="skill-grid">
-        {['fluency', 'pronunciation', 'grammar', 'confidence', 'empathy', 'listening', 'engagement'].map(
-          (skill) => (
-            <article key={skill}>
-              <span>{skill}</span>
-              <strong>{currentUser[skill] ?? '-'}</strong>
-            </article>
-          ),
-        )}
+        {SKILLS.map((skill) => (
+          <article key={skill}>
+            <span>{skill}</span>
+            <strong>{summary?.skills?.[skill] ?? currentUser[skill] ?? '-'}</strong>
+          </article>
+        ))}
       </div>
+      {summary?.statistics && (
+        <section className="page-stack">
+          <header>
+            <p className="eyebrow">Activity</p>
+            <h2>Session stats</h2>
+          </header>
+          <div className="stats-grid">
+            {Object.entries(summary.statistics).map(([key, value]) => (
+              <article key={key}>
+                <span>{formatLabel(key)}</span>
+                <strong>{value ?? 0}</strong>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+      <section className="page-stack">
+        <header>
+          <p className="eyebrow">History</p>
+          <h2>Skill changes</h2>
+        </header>
+        {skillHistory.length === 0 ? (
+          <EmptyState title="No skill history yet" message="Complete Debate or Roleplay feedback to build history." />
+        ) : (
+          <div className="history-list">
+            {skillHistory.map((entry) => (
+              <article key={entry.id}>
+                <div>
+                  <strong>{formatLabel(entry.skillName)}</strong>
+                  <span>{entry.sessionType} session #{entry.sessionId}</span>
+                </div>
+                <span>
+                  {entry.oldValue} to {entry.newValue}
+                </span>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+      <section className="page-stack">
+        <header>
+          <p className="eyebrow">History</p>
+          <h2>Reputation changes</h2>
+        </header>
+        {reputationHistory.length === 0 ? (
+          <EmptyState title="No reputation history yet" message="Session completion rewards will appear here." />
+        ) : (
+          <div className="history-list">
+            {reputationHistory.map((entry) => (
+              <article key={entry.id}>
+                <div>
+                  <strong>{entry.changeAmount > 0 ? `+${entry.changeAmount}` : entry.changeAmount}</strong>
+                  <span>{entry.reason}</span>
+                </div>
+                <span>{formatDate(entry.createdAt)}</span>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </section>
   )
+}
+
+function formatLabel(value) {
+  return value.replace(/([A-Z])/g, ' $1').replace(/^./, (letter) => letter.toUpperCase())
+}
+
+function formatDate(value) {
+  if (!value) {
+    return '-'
+  }
+
+  return new Date(value).toLocaleString()
 }
 
 export default DashboardPage
