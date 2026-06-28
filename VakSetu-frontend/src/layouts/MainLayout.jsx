@@ -1,10 +1,16 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import EventPanel from '../components/common/EventPanel'
 import { routes } from '../constants/routes'
 import { useAuth } from '../hooks/useAuth'
 
 function MainLayout() {
-  const { currentUser, logout } = useAuth()
+  const { currentUser, logoutWithServer } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await logoutWithServer()
+    navigate(routes.login, { replace: true })
+  }
 
   return (
     <div className="app-shell">
@@ -20,7 +26,7 @@ function MainLayout() {
           <NavLink to={routes.gd}>GD</NavLink>
           <NavLink to={routes.roleplay}>Roleplay</NavLink>
         </nav>
-        <button type="button" className="ghost-button" onClick={logout}>
+        <button type="button" className="ghost-button" onClick={handleLogout}>
           Logout
         </button>
       </aside>

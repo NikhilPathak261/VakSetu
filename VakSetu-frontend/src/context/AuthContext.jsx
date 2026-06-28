@@ -37,6 +37,18 @@ export function AuthProvider({ children }) {
     setAuthLoading(false)
   }, [])
 
+  const logoutWithServer = useCallback(async () => {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+
+    try {
+      if (refreshToken) {
+        await AuthService.logout(refreshToken)
+      }
+    } finally {
+      logout()
+    }
+  }, [logout])
+
   const refreshProfile = useCallback(async () => {
     const profile = await UserService.getProfile()
     setCurrentUser(profile)
@@ -81,9 +93,10 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      logoutWithServer,
       refreshProfile,
     }),
-    [accessToken, currentUser, authLoading, login, register, logout, refreshProfile],
+    [accessToken, currentUser, authLoading, login, register, logout, logoutWithServer, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

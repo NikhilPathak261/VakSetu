@@ -1,6 +1,7 @@
 package com.vaksetu.auth.service;
 
 import com.vaksetu.auth.dto.AuthResponse;
+import com.vaksetu.auth.dto.LogoutResponse;
 import com.vaksetu.auth.dto.LoginRequest;
 import com.vaksetu.auth.dto.RefreshTokenRequest;
 import com.vaksetu.auth.dto.RegisterRequest;
@@ -128,6 +129,18 @@ public class AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .userId(user.getId())
+                .build();
+    }
+
+    public LogoutResponse logout(RefreshTokenRequest request) {
+        RefreshToken storedRefreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
+                .orElseThrow(() -> new ResourceNotFoundException("Refresh token not found"));
+
+        storedRefreshToken.setRevoked(true);
+        refreshTokenRepository.save(storedRefreshToken);
+
+        return LogoutResponse.builder()
+                .message("Logged out successfully")
                 .build();
     }
 

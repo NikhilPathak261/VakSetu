@@ -12,6 +12,10 @@ const AuthService = {
   refresh(refreshToken) {
     return api.post('/auth/refresh', { refreshToken }).then((response) => response.data)
   },
+
+  logout(refreshToken) {
+    return api.post('/auth/logout', { refreshToken }).then((response) => response.data)
+  },
 }
 
 export default AuthService

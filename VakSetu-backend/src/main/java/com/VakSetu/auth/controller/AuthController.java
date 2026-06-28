@@ -1,6 +1,7 @@
 package com.vaksetu.auth.controller;
 
 import com.vaksetu.auth.dto.AuthResponse;
+import com.vaksetu.auth.dto.LogoutResponse;
 import com.vaksetu.auth.dto.LoginRequest;
 import com.vaksetu.auth.dto.RefreshTokenRequest;
 import com.vaksetu.auth.dto.RegisterRequest;
@@ -39,5 +40,12 @@ public class AuthController {
             @Valid @RequestBody RefreshTokenRequest request
     ) {
         return ResponseEntity.ok(authService.refreshToken(request));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<LogoutResponse> logout(
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+        return ResponseEntity.ok(authService.logout(request));
     }
 }
