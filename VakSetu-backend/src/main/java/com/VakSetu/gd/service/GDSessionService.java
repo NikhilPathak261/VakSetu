@@ -15,6 +15,7 @@ import com.vaksetu.gd.repository.GDSessionRepository;
 import com.vaksetu.gd.repository.SessionStarRepository;
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.repository.UserRepository;
+import com.vaksetu.websocket.service.EventPublisherService;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -34,6 +35,7 @@ public class GDSessionService {
     private final UserRepository userRepository;
     private final ContributorBadgeService contributorBadgeService;
     private final StatisticsService statisticsService;
+    private final EventPublisherService eventPublisherService;
 
     @Transactional
     public GDSessionResponse createRoom(
@@ -66,8 +68,10 @@ public class GDSessionService {
         gdParticipantRepository.save(creatorParticipant);
 
         statisticsService.incrementGdSessionsJoined(creator);
+        GDSessionResponse response = mapToResponse(savedSession);
+        eventPublisherService.publishGdRoomCreated(savedSession.getId(), creator.getId(), response);
 
-        return mapToResponse(savedSession);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -119,8 +123,10 @@ public class GDSessionService {
         GroupDiscussionSession savedSession = gdSessionRepository.save(session);
 
         statisticsService.incrementGdSessionsJoined(user);
+        JoinLeaveRoomResponse response = mapToJoinLeaveRoomResponse(savedSession, user, "Joined successfully");
+        eventPublisherService.publishUserJoined(savedSession.getId(), user.getId(), response);
 
-        return mapToJoinLeaveRoomResponse(savedSession, user, "Joined successfully");
+        return response;
     }
 
     @Transactional
@@ -153,8 +159,10 @@ public class GDSessionService {
         }
 
         GroupDiscussionSession savedSession = gdSessionRepository.save(session);
+        JoinLeaveRoomResponse response = mapToJoinLeaveRoomResponse(savedSession, participant.getUser(), "Left successfully");
+        eventPublisherService.publishUserLeft(savedSession.getId(), participant.getUser().getId(), response);
 
-        return mapToJoinLeaveRoomResponse(savedSession, participant.getUser(), "Left successfully");
+        return response;
     }
 
     @Transactional
@@ -232,8 +240,11 @@ public class GDSessionService {
         ));
 
         session.setStatus(SessionStatus.COMPLETED);
+        GDSessionResponse response = mapToResponse(gdSessionRepository.save(session));
+        eventPublisherService.publishLeaderboardUpdated(session.getId(), starsByUserId);
+        eventPublisherService.publishGdRoomClosed(session.getId(), creatorId, response);
 
-        return mapToResponse(gdSessionRepository.save(session));
+        return response;
     }
 
     @Transactional(readOnly = true)

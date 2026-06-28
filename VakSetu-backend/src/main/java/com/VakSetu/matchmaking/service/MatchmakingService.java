@@ -12,7 +12,9 @@ import com.vaksetu.roleplay.dto.CreateRoleplaySessionRequest;
 import com.vaksetu.roleplay.service.RoleplaySessionService;
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.repository.UserRepository;
+import com.vaksetu.websocket.service.EventPublisherService;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class MatchmakingService {
     private final MatchScoreCalculator matchScoreCalculator;
     private final DebateSessionService debateSessionService;
     private final RoleplaySessionService roleplaySessionService;
+    private final EventPublisherService eventPublisherService;
     private final ReentrantLock matchmakingLock = new ReentrantLock();
 
     @Transactional
@@ -68,6 +71,13 @@ public class MatchmakingService {
                     .participantAId(userId)
                     .participantBId(candidateEntry.getUserId())
                     .build());
+            eventPublisherService.publishMatchFound(Map.of(
+                    "sessionType", SessionType.DEBATE,
+                    "topicId", topicId,
+                    "userAId", userId,
+                    "userBId", candidateEntry.getUserId(),
+                    "matchScore", matchScore
+            ));
 
             return candidate;
         } finally {
@@ -106,6 +116,12 @@ public class MatchmakingService {
                     .participantAId(userId)
                     .participantBId(candidateEntry.getUserId())
                     .build());
+            eventPublisherService.publishMatchFound(Map.of(
+                    "sessionType", SessionType.ROLEPLAY,
+                    "userAId", userId,
+                    "userBId", candidateEntry.getUserId(),
+                    "matchScore", matchScore
+            ));
 
             return candidate;
         } finally {

@@ -13,6 +13,7 @@ import com.vaksetu.gd.repository.GDSessionRepository;
 import com.vaksetu.gd.repository.SessionStarRepository;
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.repository.UserRepository;
+import com.vaksetu.websocket.service.EventPublisherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class GDStarService {
     private final GDParticipantRepository gdParticipantRepository;
     private final SessionStarRepository sessionStarRepository;
     private final UserRepository userRepository;
+    private final EventPublisherService eventPublisherService;
 
     @Transactional
     public StarResponse giveStar(
@@ -78,12 +80,16 @@ public class GDStarService {
         receiver.setTotalStars(totalStars + 1);
         userRepository.save(receiver);
 
-        return StarResponse.builder()
+        StarResponse response = StarResponse.builder()
                 .sessionId(session.getId())
                 .giverId(giver.getId())
                 .receiverId(receiver.getId())
                 .receiverName(receiver.getName())
                 .message("Star given successfully")
                 .build();
+        eventPublisherService.publishStarReceived(session.getId(), receiver.getId(), response);
+        eventPublisherService.publishLeaderboardUpdated(session.getId(), response);
+
+        return response;
     }
 }
