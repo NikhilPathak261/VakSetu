@@ -305,6 +305,80 @@ button:disabled {
   font-size: 26px;
 }
 
+.progress-panel,
+.chart-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.progress-row,
+.chart-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.progress-row div:first-child,
+.chart-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.progress-row span,
+.chart-card span {
+  color: #6b7280;
+}
+
+.progress-row strong,
+.chart-card strong {
+  color: #111827;
+}
+
+.progress-track {
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  background: #2563eb;
+  border-radius: inherit;
+}
+
+.chart-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.chart-card svg {
+  width: 100%;
+  height: 180px;
+}
+
+.chart-axis {
+  stroke: #e5e7eb;
+  stroke-width: 1;
+}
+
+.chart-line {
+  fill: none;
+  stroke: #2563eb;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.chart-dot {
+  fill: #047857;
+}
+
 .history-list {
   display: grid;
   gap: 10px;

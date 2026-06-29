@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
+import ProgressBar from '../../components/dashboard/ProgressBar'
+import ProgressSummary from '../../components/dashboard/ProgressSummary'
+import TrendChart from '../../components/dashboard/TrendChart'
 import { useAuth } from '../../hooks/useAuth'
 import DashboardService from '../../services/DashboardService'
 
@@ -92,6 +95,21 @@ function DashboardPage() {
           </article>
         ))}
       </div>
+      <section className="page-stack">
+        <header>
+          <p className="eyebrow">Skills</p>
+          <h2>Current skill balance</h2>
+        </header>
+        <div className="progress-panel">
+          {SKILLS.map((skill) => (
+            <ProgressBar
+              key={skill}
+              label={formatLabel(skill)}
+              value={summary?.skills?.[skill] ?? currentUser[skill] ?? 0}
+            />
+          ))}
+        </div>
+      </section>
       {summary?.statistics && (
         <section className="page-stack">
           <header>
@@ -108,6 +126,25 @@ function DashboardPage() {
           </div>
         </section>
       )}
+      <section className="page-stack">
+        <header>
+          <p className="eyebrow">Trends</p>
+          <h2>Recent progress</h2>
+        </header>
+        <ProgressSummary skillHistory={skillHistory} reputationHistory={reputationHistory} />
+        <div className="chart-grid">
+          <TrendChart
+            title="Skill trajectory"
+            points={buildSkillTrend(skillHistory)}
+            emptyMessage="Complete sessions to see skill movement."
+          />
+          <TrendChart
+            title="Reputation trajectory"
+            points={buildReputationTrend(summary?.reputation, reputationHistory)}
+            emptyMessage="Complete sessions to see reputation movement."
+          />
+        </div>
+      </section>
       <section className="page-stack">
         <header>
           <p className="eyebrow">History</p>
@@ -166,6 +203,33 @@ function formatDate(value) {
   }
 
   return new Date(value).toLocaleString()
+}
+
+function buildSkillTrend(skillHistory) {
+  return skillHistory
+    .slice()
+    .reverse()
+    .map((entry) => ({
+      label: `${entry.skillName}-${entry.id}`,
+      value: Number(entry.newValue.toFixed(1)),
+    }))
+}
+
+function buildReputationTrend(currentReputation, reputationHistory) {
+  if (!Number.isFinite(Number(currentReputation))) {
+    return []
+  }
+
+  let runningValue = Number(currentReputation) - reputationHistory
+    .reduce((total, entry) => total + entry.changeAmount, 0)
+
+  return reputationHistory.slice().reverse().map((entry) => {
+    runningValue += entry.changeAmount
+    return {
+      label: `${entry.reason}-${entry.id}`,
+      value: runningValue,
+    }
+  })
 }
 
 export default DashboardPage
