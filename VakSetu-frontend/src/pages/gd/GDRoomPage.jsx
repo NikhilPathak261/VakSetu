@@ -133,13 +133,13 @@ function GDRoomPage() {
         </div>
       )}
       <div className="toolbar">
-        <button type="button" onClick={markSpoken}>
+        <button type="button" onClick={markSpoken} disabled={loading || !room}>
           Mark spoken
         </button>
-        <button type="button" className="ghost-button" onClick={closeRoom}>
+        <button type="button" className="ghost-button" onClick={closeRoom} disabled={loading || !room}>
           Close room
         </button>
-        <button type="button" className="ghost-button" onClick={loadRoom}>
+        <button type="button" className="ghost-button" onClick={loadRoom} disabled={loading}>
           Refresh
         </button>
       </div>
@@ -152,7 +152,7 @@ function GDRoomPage() {
           onChange={(event) => setReceiverId(event.target.value)}
           required
         />
-        <button type="submit">Give star</button>
+        <button type="submit" disabled={loading || !room}>Give star</button>
       </form>
       <div className="list-grid">
         {!loading && leaderboard.length === 0 && (
