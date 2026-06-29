@@ -67,6 +67,9 @@ function RoleplayLobbyPage() {
         </button>
       </div>
       {loadingStatus && <LoadingBlock label="Loading queue status" />}
+      {!loadingStatus && (
+        <p className="muted">Roleplay uses seeded scenario cards from the backend after a match is found.</p>
+      )}
       {matchedSessionId && (
         <Link to={`/roleplay/session/${matchedSessionId}`} className="inline-link">
           Open matched roleplay

@@ -79,7 +79,10 @@ function DebateLobbyPage() {
       </div>
       {loadingTopics && <LoadingBlock label="Loading topics" />}
       {!loadingTopics && topics.length === 0 && (
-        <EmptyState title="No topics yet" message="Ask an admin to add debate topics before joining a queue." />
+        <EmptyState title="No topics yet" message="Restart the backend to load demo topics, then refresh this page." />
+      )}
+      {!loadingTopics && topics.length > 0 && (
+        <p className="muted">{topics.length} active debate topics available.</p>
       )}
       {matchedSessionId && (
         <Link to={`/debate/session/${matchedSessionId}`} className="inline-link">

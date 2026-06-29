@@ -10,4 +10,6 @@ public interface RoleplayScenarioRepository extends JpaRepository<RoleplayScenar
     List<RoleplayScenario> findByDifficulty(DifficultyLevel difficulty);
 
     List<RoleplayScenario> findByActiveTrue();
+
+    boolean existsByTitleIgnoreCase(String title);
 }
