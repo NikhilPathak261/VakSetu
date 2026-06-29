@@ -10,6 +10,7 @@ import com.vaksetu.user.repository.UserRepository;
 import com.vaksetu.user.repository.UserSkillRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +59,18 @@ public class DebateQueueService {
 
     public Collection<DebateQueueEntry> getAllEntries() {
         return queue.values();
+    }
+
+    public int removeEntriesJoinedBefore(LocalDateTime cutoffTime) {
+        List<Long> expiredUserIds = queue.values()
+                .stream()
+                .filter(entry -> entry.getJoinedAt().isBefore(cutoffTime))
+                .map(DebateQueueEntry::getUserId)
+                .toList();
+
+        expiredUserIds.forEach(queue::remove);
+
+        return expiredUserIds.size();
     }
 
     private UserSkillSnapshot buildUserSkillSnapshot(User user, UserSkill userSkill) {

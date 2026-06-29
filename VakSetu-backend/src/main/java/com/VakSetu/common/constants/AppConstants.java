@@ -28,6 +28,10 @@ public final class AppConstants {
     public static final Integer ROLEPLAY_PREPARATION_SECONDS = 180;
     public static final Integer ROLEPLAY_SESSION_DURATION_SECONDS = 900;
 
+    public static final Integer QUEUE_ENTRY_TTL_MINUTES = 15;
+    public static final Integer STALE_SESSION_TTL_MINUTES = 60;
+    public static final long CLEANUP_FIXED_DELAY_MS = 60_000L;
+
     private AppConstants() {
     }
 }

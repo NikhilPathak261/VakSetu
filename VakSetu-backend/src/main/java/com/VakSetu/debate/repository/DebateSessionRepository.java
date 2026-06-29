@@ -2,6 +2,8 @@ package com.vaksetu.debate.repository;
 
 import com.vaksetu.common.enums.SessionStatus;
 import com.vaksetu.debate.entity.DebateSession;
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,4 +14,9 @@ public interface DebateSessionRepository extends JpaRepository<DebateSession, Lo
     List<DebateSession> findByParticipantAId(Long userId);
 
     List<DebateSession> findByParticipantBId(Long userId);
+
+    List<DebateSession> findByStatusInAndUpdatedAtBefore(
+            Collection<SessionStatus> statuses,
+            LocalDateTime cutoffTime
+    );
 }

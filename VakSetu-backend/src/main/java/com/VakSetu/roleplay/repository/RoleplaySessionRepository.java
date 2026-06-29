@@ -2,6 +2,8 @@ package com.vaksetu.roleplay.repository;
 
 import com.vaksetu.common.enums.SessionStatus;
 import com.vaksetu.roleplay.entity.RoleplaySession;
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -12,4 +14,9 @@ public interface RoleplaySessionRepository extends JpaRepository<RoleplaySession
     List<RoleplaySession> findByParticipantAId(Long userId);
 
     List<RoleplaySession> findByParticipantBId(Long userId);
+
+    List<RoleplaySession> findByStatusInAndUpdatedAtBefore(
+            Collection<SessionStatus> statuses,
+            LocalDateTime cutoffTime
+    );
 }
