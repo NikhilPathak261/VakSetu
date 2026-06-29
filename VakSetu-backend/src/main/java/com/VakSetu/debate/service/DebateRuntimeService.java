@@ -36,6 +36,7 @@ public class DebateRuntimeService {
     public DebateRuntimeResponse startRoundOne(Long sessionId) {
         DebateSession session = loadSession(sessionId);
         validateStatus(session, SessionStatus.PREPARATION, "Cannot start ROUND_1 unless status is PREPARATION");
+        validateWindowEnded(session.getRoundEndTime(), "Cannot start ROUND_1 before preparation ends");
         LocalDateTime now = LocalDateTime.now();
 
         session.setStatus(SessionStatus.ROUND_1);
@@ -52,6 +53,7 @@ public class DebateRuntimeService {
     public DebateRuntimeResponse startRoundTwo(Long sessionId) {
         DebateSession session = loadSession(sessionId);
         validateStatus(session, SessionStatus.ROUND_1, "Cannot start ROUND_2 unless status is ROUND_1");
+        validateWindowEnded(session.getRoundEndTime(), "Cannot start ROUND_2 before ROUND_1 ends");
         LocalDateTime now = LocalDateTime.now();
 
         session.setStatus(SessionStatus.ROUND_2);
@@ -67,6 +69,7 @@ public class DebateRuntimeService {
     public DebateRuntimeResponse startRoundThree(Long sessionId) {
         DebateSession session = loadSession(sessionId);
         validateStatus(session, SessionStatus.ROUND_2, "Cannot start ROUND_3 unless status is ROUND_2");
+        validateWindowEnded(session.getRoundEndTime(), "Cannot start ROUND_3 before ROUND_2 ends");
         LocalDateTime now = LocalDateTime.now();
 
         session.setStatus(SessionStatus.ROUND_3);
@@ -99,6 +102,15 @@ public class DebateRuntimeService {
             String message
     ) {
         if (session.getStatus() != expectedStatus) {
+            throw new BadRequestException(message);
+        }
+    }
+
+    private void validateWindowEnded(
+            LocalDateTime windowEndTime,
+            String message
+    ) {
+        if (windowEndTime == null || windowEndTime.isAfter(LocalDateTime.now())) {
             throw new BadRequestException(message);
         }
     }

@@ -80,6 +80,7 @@ public class RoleplaySessionService {
     public RoleplaySessionResponse startRoleplay(Long sessionId) {
         RoleplaySession session = loadSession(sessionId);
         validateStatus(session, SessionStatus.PREPARATION, "Cannot start roleplay unless status is PREPARATION");
+        validateWindowEnded(session.getEndTime(), "Cannot start roleplay before preparation ends");
 
         LocalDateTime now = LocalDateTime.now();
         session.setStatus(SessionStatus.ACTIVE);
@@ -139,6 +140,15 @@ public class RoleplaySessionService {
             String message
     ) {
         if (session.getStatus() != expectedStatus) {
+            throw new BadRequestException(message);
+        }
+    }
+
+    private void validateWindowEnded(
+            LocalDateTime windowEndTime,
+            String message
+    ) {
+        if (windowEndTime == null || windowEndTime.isAfter(LocalDateTime.now())) {
             throw new BadRequestException(message);
         }
     }

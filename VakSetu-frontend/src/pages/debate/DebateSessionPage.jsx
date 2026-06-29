@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import FeedbackForm from '../../components/feedback/FeedbackForm'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
+import SessionCountdown from '../../components/session/SessionCountdown'
 import WebRtcCallPanel from '../../components/webrtc/WebRtcCallPanel'
 import { useAuth } from '../../hooks/useAuth'
 import DebateService from '../../services/DebateService'
@@ -14,10 +15,11 @@ function DebateSessionPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(0)
+  const autoRefreshedWindowRef = useRef('')
 
-  async function loadSession() {
+  const loadSession = useCallback(async () => {
     setSession(await DebateService.getSession(sessionId))
-  }
+  }, [sessionId])
 
   async function handleFeedbackSubmitted() {
     await loadSession()
@@ -37,10 +39,24 @@ function DebateSessionPage() {
     }
 
     updateCurrentTime()
-    const intervalId = window.setInterval(updateCurrentTime, 30000)
+    const intervalId = window.setInterval(updateCurrentTime, 1000)
 
     return () => window.clearInterval(intervalId)
   }, [])
+
+  useEffect(() => {
+    if (!session?.roundEndTime) {
+      return
+    }
+
+    const windowKey = `${session.status}-${session.roundEndTime}`
+    const windowEnded = new Date(session.roundEndTime).getTime() <= currentTime
+
+    if (windowEnded && autoRefreshedWindowRef.current !== windowKey) {
+      autoRefreshedWindowRef.current = windowKey
+      loadSession().catch((exception) => setError(exception.message))
+    }
+  }, [currentTime, loadSession, session?.roundEndTime, session?.status])
 
   const partner = useMemo(() => {
     if (!session || !currentUser) {
@@ -93,6 +109,14 @@ function DebateSessionPage() {
       && new Date(session.roundEndTime).getTime() <= currentTime
   }, [currentTime, session])
 
+  const activeWindowEnded = useMemo(() => {
+    if (!session?.roundEndTime) {
+      return false
+    }
+
+    return new Date(session.roundEndTime).getTime() <= currentTime
+  }, [currentTime, session])
+
   return (
     <section className="page-stack">
       <header>
@@ -113,6 +137,12 @@ function DebateSessionPage() {
             <span>Round</span>
             <strong>{session.currentRound ?? 0}/{session.totalRounds ?? 3}</strong>
           </article>
+          <SessionCountdown
+            label={session.status === 'PREPARATION' ? 'Preparation' : 'Phase time'}
+            targetTime={session.roundEndTime}
+            currentTime={currentTime}
+            onElapsedText="Ready"
+          />
           <article>
             <span>{session.participantAName}</span>
             <strong>{session.sideA}</strong>
@@ -130,17 +160,17 @@ function DebateSessionPage() {
           </button>
         )}
         {session?.status === 'PREPARATION' && (
-          <button type="button" onClick={() => advanceRound(DebateService.startRoundOne)}>
+          <button type="button" onClick={() => advanceRound(DebateService.startRoundOne)} disabled={!activeWindowEnded}>
             Start round 1
           </button>
         )}
         {session?.status === 'ROUND_1' && (
-          <button type="button" onClick={() => advanceRound(DebateService.startRoundTwo)}>
+          <button type="button" onClick={() => advanceRound(DebateService.startRoundTwo)} disabled={!activeWindowEnded}>
             Start round 2
           </button>
         )}
         {session?.status === 'ROUND_2' && (
-          <button type="button" onClick={() => advanceRound(DebateService.startRoundThree)}>
+          <button type="button" onClick={() => advanceRound(DebateService.startRoundThree)} disabled={!activeWindowEnded}>
             Start round 3
           </button>
         )}

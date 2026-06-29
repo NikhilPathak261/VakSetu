@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import FeedbackForm from '../../components/feedback/FeedbackForm'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
+import SessionCountdown from '../../components/session/SessionCountdown'
 import WebRtcCallPanel from '../../components/webrtc/WebRtcCallPanel'
 import { useAuth } from '../../hooks/useAuth'
 import RoleplayService from '../../services/RoleplayService'
@@ -14,10 +15,11 @@ function RoleplaySessionPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(0)
+  const autoRefreshedWindowRef = useRef('')
 
-  async function loadSession() {
+  const loadSession = useCallback(async () => {
     setSession(await RoleplayService.getSession(sessionId))
-  }
+  }, [sessionId])
 
   async function handleFeedbackSubmitted() {
     await loadSession()
@@ -37,10 +39,24 @@ function RoleplaySessionPage() {
     }
 
     updateCurrentTime()
-    const intervalId = window.setInterval(updateCurrentTime, 30000)
+    const intervalId = window.setInterval(updateCurrentTime, 1000)
 
     return () => window.clearInterval(intervalId)
   }, [])
+
+  useEffect(() => {
+    if (!session?.endTime) {
+      return
+    }
+
+    const windowKey = `${session.status}-${session.endTime}`
+    const windowEnded = new Date(session.endTime).getTime() <= currentTime
+
+    if (windowEnded && autoRefreshedWindowRef.current !== windowKey) {
+      autoRefreshedWindowRef.current = windowKey
+      loadSession().catch((exception) => setError(exception.message))
+    }
+  }, [currentTime, loadSession, session?.endTime, session?.status])
 
   const partner = useMemo(() => {
     if (!session || !currentUser) {
@@ -82,6 +98,14 @@ function RoleplaySessionPage() {
       && new Date(session.endTime).getTime() <= currentTime
   }, [currentTime, session])
 
+  const activeWindowEnded = useMemo(() => {
+    if (!session?.endTime) {
+      return false
+    }
+
+    return new Date(session.endTime).getTime() <= currentTime
+  }, [currentTime, session])
+
   return (
     <section className="page-stack">
       <header>
@@ -100,6 +124,12 @@ function RoleplaySessionPage() {
               <span>Status</span>
               <strong>{session.status}</strong>
             </article>
+            <SessionCountdown
+              label={session.status === 'PREPARATION' ? 'Preparation' : 'Session time'}
+              targetTime={session.endTime}
+              currentTime={currentTime}
+              onElapsedText={session.status === 'PREPARATION' ? 'Ready' : 'Ended'}
+            />
             <article>
               <span>{session.participantAName}</span>
               <strong>{session.assignedRoleA}</strong>
@@ -112,9 +142,11 @@ function RoleplaySessionPage() {
         </>
       )}
       <div className="toolbar">
-        <button type="button" onClick={startRoleplay}>
-          Start roleplay
-        </button>
+        {session?.status === 'PREPARATION' && (
+          <button type="button" onClick={startRoleplay} disabled={!activeWindowEnded}>
+            Start roleplay
+          </button>
+        )}
         <button type="button" className="ghost-button" onClick={loadSession}>
           Refresh
         </button>
