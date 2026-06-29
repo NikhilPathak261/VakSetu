@@ -52,9 +52,9 @@ describe('GDLobbyPage', () => {
     )
 
     await screen.findByText('No active rooms')
-    const maxParticipantsInput = screen.getByDisplayValue('10')
+    const maxParticipantsInput = screen.getByLabelText(/max participants/i)
 
-    await user.type(screen.getByPlaceholderText(/topic/i), 'Public speaking')
+    await user.type(screen.getByLabelText(/^topic$/i), 'Public speaking')
     await user.clear(maxParticipantsInput)
     await user.type(maxParticipantsInput, '6')
     await user.click(screen.getByRole('button', { name: /create/i }))

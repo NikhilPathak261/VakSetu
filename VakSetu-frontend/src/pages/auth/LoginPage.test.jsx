@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -29,8 +29,8 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    await user.type(screen.getByLabelText(/email/i), 'sam@example.com')
-    await user.type(screen.getByLabelText(/password/i), 'password123')
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'sam@example.com' } })
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'password123' } })
     await user.click(screen.getByRole('button', { name: /sign in/i }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Invalid credentials')

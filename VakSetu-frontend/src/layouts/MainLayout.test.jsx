@@ -45,6 +45,6 @@ describe('MainLayout', () => {
     await user.click(screen.getByRole('button', { name: /logout/i }))
 
     expect(authMocks.logoutWithServer).toHaveBeenCalledTimes(1)
-    expect(screen.getByText('Login page')).toBeInTheDocument()
+    expect(await screen.findByText('Login page')).toBeInTheDocument()
   })
 })

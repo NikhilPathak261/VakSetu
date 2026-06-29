@@ -63,21 +63,27 @@ function GDLobbyPage() {
         <h1>Active rooms</h1>
       </header>
       <form className="toolbar" onSubmit={createRoom}>
-        <input
-          type="text"
-          placeholder="Topic"
-          value={form.topic}
-          onChange={(event) => setForm({ ...form, topic: event.target.value })}
-          required
-        />
-        <input
-          type="number"
-          min="1"
-          max="100"
-          value={form.maxParticipants}
-          onChange={(event) => setForm({ ...form, maxParticipants: event.target.value })}
-          required
-        />
+        <label>
+          Topic
+          <input
+            type="text"
+            placeholder="Topic"
+            value={form.topic}
+            onChange={(event) => setForm({ ...form, topic: event.target.value })}
+            required
+          />
+        </label>
+        <label>
+          Max participants
+          <input
+            type="number"
+            min="1"
+            max="100"
+            value={form.maxParticipants}
+            onChange={(event) => setForm({ ...form, maxParticipants: event.target.value })}
+            required
+          />
+        </label>
         <button type="submit">Create</button>
       </form>
       <Alert variant="error">{error}</Alert>

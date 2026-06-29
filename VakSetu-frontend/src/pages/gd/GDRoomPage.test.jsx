@@ -75,4 +75,63 @@ describe('GDRoomPage', () => {
     expect(GDService.markSpoken).toHaveBeenCalledWith('14')
     expect(await screen.findByRole('status')).toHaveTextContent('Marked as spoken')
   })
+
+  it('gives stars with the backend DTO and refreshes leaderboard state', async () => {
+    const user = userEvent.setup()
+    GDService.getRoom.mockResolvedValue({
+      sessionId: 14,
+      topic: 'AI in schools',
+      status: 'ACTIVE',
+      currentParticipants: 4,
+      maxParticipants: 10,
+      creatorName: 'Sam',
+    })
+    GDService.getLeaderboard
+      .mockResolvedValueOnce({ leaderboard: [] })
+      .mockResolvedValueOnce({ leaderboard: [{ userId: 2, userName: 'Priya', stars: 1 }] })
+    GDService.giveStar.mockResolvedValue({ message: 'Star given' })
+
+    render(<GDRoomPage />)
+
+    await screen.findByText('AI in schools')
+    await user.type(screen.getByPlaceholderText(/receiver user id/i), '2')
+    await user.click(screen.getByRole('button', { name: /give star/i }))
+
+    expect(GDService.giveStar).toHaveBeenCalledWith({
+      sessionId: 14,
+      receiverId: 2,
+    })
+    expect(await screen.findByRole('status')).toHaveTextContent('Star given')
+    expect(await screen.findByText('Priya')).toBeInTheDocument()
+  })
+
+  it('closes the room and shows success feedback', async () => {
+    const user = userEvent.setup()
+    GDService.getRoom.mockResolvedValue({
+      sessionId: 14,
+      topic: 'AI in schools',
+      status: 'ACTIVE',
+      currentParticipants: 4,
+      maxParticipants: 10,
+      creatorName: 'Sam',
+    })
+    GDService.getLeaderboard.mockResolvedValue({ leaderboard: [] })
+    GDService.closeRoom.mockResolvedValue({
+      sessionId: 14,
+      topic: 'AI in schools',
+      status: 'COMPLETED',
+      currentParticipants: 4,
+      maxParticipants: 10,
+      creatorName: 'Sam',
+    })
+
+    render(<GDRoomPage />)
+
+    await screen.findByText('AI in schools')
+    await user.click(screen.getByRole('button', { name: /close room/i }))
+
+    expect(GDService.closeRoom).toHaveBeenCalledWith('14')
+    expect(await screen.findByRole('status')).toHaveTextContent('Room closed')
+    expect(screen.getByText('COMPLETED')).toBeInTheDocument()
+  })
 })
