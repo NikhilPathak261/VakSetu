@@ -220,6 +220,37 @@ button:disabled {
   color: #047857;
 }
 
+.alert {
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.alert strong {
+  color: inherit;
+}
+
+.alert span {
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+
+.alert-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.alert-success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
 .stats-grid,
 .skill-grid,
 .list-grid {

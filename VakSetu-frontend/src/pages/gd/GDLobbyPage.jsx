@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Alert from '../../components/common/Alert'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
 import { websocketEvents } from '../../constants/websocket'
@@ -79,7 +80,7 @@ function GDLobbyPage() {
         />
         <button type="submit">Create</button>
       </form>
-      {error && <p className="error-text">{error}</p>}
+      <Alert variant="error">{error}</Alert>
       {loadingRooms && <LoadingBlock label="Loading GD rooms" />}
       {!loadingRooms && rooms.length === 0 && (
         <EmptyState title="No active rooms" message="Create a room to start a group discussion." />

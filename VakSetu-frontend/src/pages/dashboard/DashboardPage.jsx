@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Alert from '../../components/common/Alert'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
 import ProgressBar from '../../components/dashboard/ProgressBar'
@@ -67,7 +68,7 @@ function DashboardPage() {
           {loading ? 'Refreshing' : 'Refresh dashboard'}
         </button>
       </div>
-      {error && <p className="error-text">{error}</p>}
+      <Alert variant="error">{error}</Alert>
       {loading && <LoadingBlock label="Loading progress data" />}
       <div className="stats-grid">
         <article>

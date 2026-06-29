@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import FeedbackForm from '../../components/feedback/FeedbackForm'
+import Alert from '../../components/common/Alert'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
 import SessionCountdown from '../../components/session/SessionCountdown'
@@ -167,7 +168,7 @@ function RoleplaySessionPage() {
           )}
         </>
       )}
-      {error && <p className="error-text">{error}</p>}
+      <Alert variant="error">{error}</Alert>
     </section>
   )
 }

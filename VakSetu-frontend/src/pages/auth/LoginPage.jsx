@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import Alert from '../../components/common/Alert'
 import { useAuth } from '../../hooks/useAuth'
 import { routes } from '../../constants/routes'
 
@@ -47,7 +48,7 @@ function LoginPage() {
           minLength={8}
         />
       </label>
-      {error && <p className="error-text">{error}</p>}
+      <Alert variant="error">{error}</Alert>
       <button type="submit" disabled={loading}>
         {loading ? 'Signing in' : 'Sign in'}
       </button>

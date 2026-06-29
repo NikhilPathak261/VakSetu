@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import Alert from '../common/Alert'
 import { websocketTopics, webRtcSignalTypes } from '../../constants/websocket'
 import { useAuth } from '../../hooks/useAuth'
 import { useWebSocketEvents } from '../../hooks/useWebSocketEvents'
@@ -88,7 +89,7 @@ function WebRtcSignalingPanel({ sessionId, sessionType, partner }) {
       <button type="button" onClick={sendSignal} disabled={!connected}>
         Send signal
       </button>
-      {error && <p className="error-text">{error}</p>}
+      <Alert variant="error">{error}</Alert>
       <div className="history-list">
         {messages.length === 0 ? (
           <p className="muted">Incoming offer, answer, and ICE messages will appear here.</p>

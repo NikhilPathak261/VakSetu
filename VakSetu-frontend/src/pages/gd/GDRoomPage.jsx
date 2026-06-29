@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import Alert from '../../components/common/Alert'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
 import { websocketEvents } from '../../constants/websocket'
@@ -164,8 +165,8 @@ function GDRoomPage() {
           </article>
         ))}
       </div>
-      {message && <p className="success-text">{message}</p>}
-      {error && <p className="error-text">{error}</p>}
+      <Alert variant="success">{message}</Alert>
+      <Alert variant="error">{error}</Alert>
     </section>
   )
 }

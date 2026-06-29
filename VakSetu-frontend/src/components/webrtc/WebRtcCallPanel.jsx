@@ -1,3 +1,4 @@
+import Alert from '../common/Alert'
 import { useWebRtcPeerConnection } from '../../hooks/useWebRtcPeerConnection'
 
 function WebRtcCallPanel({ sessionId, sessionType, partner }) {
@@ -52,7 +53,7 @@ function WebRtcCallPanel({ sessionId, sessionType, partner }) {
           Hang up
         </button>
       </div>
-      {error && <p className="error-text">{error}</p>}
+      <Alert variant="error">{error}</Alert>
     </section>
   )
 }

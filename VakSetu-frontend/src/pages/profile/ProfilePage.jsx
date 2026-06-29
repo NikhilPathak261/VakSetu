@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Alert from '../../components/common/Alert'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
 import { useAuth } from '../../hooks/useAuth'
@@ -56,8 +57,8 @@ function ProfilePage() {
           Email
           <input type="email" value={currentUser?.email || ''} disabled />
         </label>
-        {message && <p className="success-text">{message}</p>}
-        {error && <p className="error-text">{error}</p>}
+        <Alert variant="success">{message}</Alert>
+        <Alert variant="error">{error}</Alert>
         <button type="submit" disabled={saving}>
           {saving ? 'Saving' : 'Save'}
         </button>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Alert from '../common/Alert'
 import FeedbackService from '../../services/FeedbackService'
 
 const skills = [
@@ -68,8 +69,8 @@ function FeedbackForm({ sessionId, sessionType, targetUserId, targetName, onSubm
           </label>
         ))}
       </div>
-      {message && <p className="success-text">{message}</p>}
-      {error && <p className="error-text">{error}</p>}
+      <Alert variant="success">{message}</Alert>
+      <Alert variant="error">{error}</Alert>
       <button type="submit" disabled={loading || !targetUserId}>
         {loading ? 'Submitting' : 'Submit feedback'}
       </button>

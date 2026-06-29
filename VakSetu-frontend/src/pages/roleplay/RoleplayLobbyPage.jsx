@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Alert from '../../components/common/Alert'
 import LoadingBlock from '../../components/common/LoadingBlock'
 import { websocketEvents } from '../../constants/websocket'
 import { useWebSocketEvents } from '../../hooks/useWebSocketEvents'
@@ -76,7 +77,7 @@ function RoleplayLobbyPage() {
         </Link>
       )}
       {status && <p className="muted">Queue size: {status.queueSize}</p>}
-      {error && <p className="error-text">{error}</p>}
+      <Alert variant="error">{error}</Alert>
     </section>
   )
 }
