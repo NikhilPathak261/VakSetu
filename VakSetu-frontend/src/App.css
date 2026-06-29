@@ -161,6 +161,14 @@ code {
   overflow-wrap: anywhere;
 }
 
+video {
+  background: #111827;
+  border-radius: 8px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
 button {
   border: 0;
   border-radius: 6px;
@@ -302,6 +310,26 @@ button:disabled {
 
 .history-list article span {
   color: #6b7280;
+}
+
+.webrtc-panel {
+  box-shadow: none;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.video-grid article {
+  display: grid;
+  gap: 8px;
+}
+
+.video-grid span {
+  color: #6b7280;
+  font-weight: 700;
 }
 
 .rating-grid {

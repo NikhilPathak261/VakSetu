@@ -67,13 +67,13 @@ public class DebateSessionService {
     @Transactional
     public DebateSessionResponse startSession(Long sessionId) {
         DebateSession session = loadSession(sessionId);
+        validateStatus(session, SessionStatus.MATCHED, "Cannot start preparation unless status is MATCHED");
         LocalDateTime now = LocalDateTime.now();
-        session.setStatus(SessionStatus.ROUND_1);
-        session.setCurrentRound(1);
-        session.setCurrentSpeaker(session.getParticipantA());
-        session.setStartTime(LocalDateTime.now());
+        session.setStatus(SessionStatus.PREPARATION);
+        session.setCurrentRound(0);
+        session.setCurrentSpeaker(null);
         session.setRoundStartTime(now);
-        session.setRoundEndTime(now.plusSeconds(session.getRoundDurationSeconds()));
+        session.setRoundEndTime(now.plusSeconds(session.getPreparationSeconds()));
         DebateSession savedSession = debateSessionRepository.save(session);
 
         return mapToResponse(savedSession);
@@ -89,6 +89,16 @@ public class DebateSessionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Debate session not found"));
     }
 
+    private void validateStatus(
+            DebateSession session,
+            SessionStatus expectedStatus,
+            String message
+    ) {
+        if (session.getStatus() != expectedStatus) {
+            throw new BadRequestException(message);
+        }
+    }
+
     private DebateSessionResponse mapToResponse(DebateSession session) {
         return DebateSessionResponse.builder()
                 .id(session.getId())
@@ -101,6 +111,10 @@ public class DebateSessionService {
                 .sideA(session.getSideA())
                 .sideB(session.getSideB())
                 .status(session.getStatus())
+                .currentRound(session.getCurrentRound())
+                .totalRounds(session.getTotalRounds())
+                .roundStartTime(session.getRoundStartTime())
+                .roundEndTime(session.getRoundEndTime())
                 .startTime(session.getStartTime())
                 .endTime(session.getEndTime())
                 .build();

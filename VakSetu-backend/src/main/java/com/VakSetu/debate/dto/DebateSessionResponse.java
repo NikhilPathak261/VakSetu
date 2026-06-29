@@ -32,6 +32,10 @@ public class DebateSessionResponse {
 
     private SessionStatus status;
 
+    private Integer currentRound;
+    private Integer totalRounds;
+    private LocalDateTime roundStartTime;
+    private LocalDateTime roundEndTime;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 }

@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import FeedbackForm from '../../components/feedback/FeedbackForm'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
-import WebRtcSignalingPanel from '../../components/webrtc/WebRtcSignalingPanel'
+import WebRtcCallPanel from '../../components/webrtc/WebRtcCallPanel'
 import { useAuth } from '../../hooks/useAuth'
 import RoleplayService from '../../services/RoleplayService'
 
@@ -13,6 +13,7 @@ function RoleplaySessionPage() {
   const [session, setSession] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [currentTime, setCurrentTime] = useState(0)
 
   async function loadSession() {
     setSession(await RoleplayService.getSession(sessionId))
@@ -29,6 +30,17 @@ function RoleplaySessionPage() {
       .catch((exception) => setError(exception.message))
       .finally(() => setLoading(false))
   }, [sessionId])
+
+  useEffect(() => {
+    function updateCurrentTime() {
+      setCurrentTime(Date.now())
+    }
+
+    updateCurrentTime()
+    const intervalId = window.setInterval(updateCurrentTime, 30000)
+
+    return () => window.clearInterval(intervalId)
+  }, [])
 
   const partner = useMemo(() => {
     if (!session || !currentUser) {
@@ -55,6 +67,20 @@ function RoleplaySessionPage() {
       setError(exception.message)
     }
   }
+
+  const feedbackReady = useMemo(() => {
+    if (!session) {
+      return false
+    }
+
+    if (session.status === 'COMPLETED') {
+      return true
+    }
+
+    return session.status === 'ACTIVE'
+      && session.endTime
+      && new Date(session.endTime).getTime() <= currentTime
+  }, [currentTime, session])
 
   return (
     <section className="page-stack">
@@ -95,14 +121,18 @@ function RoleplaySessionPage() {
       </div>
       {partner && (
         <>
-          <WebRtcSignalingPanel sessionId={sessionId} sessionType="ROLEPLAY" partner={partner} />
-          <FeedbackForm
-            sessionId={Number(sessionId)}
-            sessionType="ROLEPLAY"
-            targetUserId={partner.id}
-            targetName={partner.name}
-            onSubmitted={handleFeedbackSubmitted}
-          />
+          <WebRtcCallPanel sessionId={sessionId} sessionType="ROLEPLAY" partner={partner} />
+          {feedbackReady ? (
+            <FeedbackForm
+              sessionId={Number(sessionId)}
+              sessionType="ROLEPLAY"
+              targetUserId={partner.id}
+              targetName={partner.name}
+              onSubmitted={handleFeedbackSubmitted}
+            />
+          ) : (
+            <p className="state-text">Feedback opens after the roleplay session ends.</p>
+          )}
         </>
       )}
       {error && <p className="error-text">{error}</p>}

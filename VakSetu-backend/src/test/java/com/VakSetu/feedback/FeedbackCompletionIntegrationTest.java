@@ -1,8 +1,10 @@
 package com.vaksetu.feedback;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.vaksetu.common.enums.DebateSide;
+import com.vaksetu.common.enums.DifficultyLevel;
 import com.vaksetu.common.enums.Rank;
 import com.vaksetu.common.enums.SessionStatus;
 import com.vaksetu.common.enums.SessionType;
@@ -11,7 +13,12 @@ import com.vaksetu.debate.repository.DebateSessionRepository;
 import com.vaksetu.feedback.dto.FeedbackResponse;
 import com.vaksetu.feedback.dto.SubmitFeedbackRequest;
 import com.vaksetu.feedback.service.FeedbackService;
+import com.vaksetu.exception.BadRequestException;
 import com.vaksetu.reputation.repository.ReputationHistoryRepository;
+import com.vaksetu.roleplay.entity.RoleplayScenario;
+import com.vaksetu.roleplay.entity.RoleplaySession;
+import com.vaksetu.roleplay.repository.RoleplayScenarioRepository;
+import com.vaksetu.roleplay.repository.RoleplaySessionRepository;
 import com.vaksetu.skill.repository.SkillHistoryRepository;
 import com.vaksetu.topic.entity.Topic;
 import com.vaksetu.topic.repository.TopicRepository;
@@ -20,6 +27,7 @@ import com.vaksetu.user.entity.UserSkill;
 import com.vaksetu.user.repository.UserRepository;
 import com.vaksetu.user.repository.UserSkillRepository;
 import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -45,6 +53,12 @@ class FeedbackCompletionIntegrationTest {
 
     @Autowired
     private DebateSessionRepository debateSessionRepository;
+
+    @Autowired
+    private RoleplayScenarioRepository roleplayScenarioRepository;
+
+    @Autowired
+    private RoleplaySessionRepository roleplaySessionRepository;
 
     @Autowired
     private SkillHistoryRepository skillHistoryRepository;
@@ -79,6 +93,8 @@ class FeedbackCompletionIntegrationTest {
                 .totalRounds(3)
                 .preparationSeconds(120)
                 .roundDurationSeconds(180)
+                .roundStartTime(LocalDateTime.now().minusMinutes(4))
+                .roundEndTime(LocalDateTime.now().minusMinutes(1))
                 .build());
 
         FeedbackResponse firstResponse = feedbackService.submitFeedback(
@@ -117,6 +133,80 @@ class FeedbackCompletionIntegrationTest {
         assertThat(reputationHistoryRepository.findByUserId(participantB.getId())).hasSize(1);
     }
 
+    @Test
+    void rejectsDebateFeedbackBeforeFinalRoundEnds() {
+        User participantA = saveUser("Early Debate A", "early.debate.a@example.com");
+        User participantB = saveUser("Early Debate B", "early.debate.b@example.com");
+        saveUserSkill(participantA);
+        saveUserSkill(participantB);
+
+        Topic topic = topicRepository.save(Topic.builder()
+                .title("Early Feedback")
+                .category("Communication")
+                .active(true)
+                .build());
+
+        DebateSession session = debateSessionRepository.save(DebateSession.builder()
+                .topic(topic)
+                .participantA(participantA)
+                .participantB(participantB)
+                .sideA(DebateSide.FOR)
+                .sideB(DebateSide.AGAINST)
+                .status(SessionStatus.ROUND_3)
+                .currentRound(3)
+                .totalRounds(3)
+                .preparationSeconds(120)
+                .roundDurationSeconds(180)
+                .roundStartTime(LocalDateTime.now())
+                .roundEndTime(LocalDateTime.now().plusMinutes(2))
+                .build());
+
+        assertThatThrownBy(() -> feedbackService.submitFeedback(
+                participantA.getId(),
+                request(session.getId(), participantB.getId(), 5)
+        ))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Debate feedback can be submitted after the final round ends");
+    }
+
+    @Test
+    void rejectsRoleplayFeedbackBeforeActiveSessionEnds() {
+        User participantA = saveUser("Early Roleplay A", "early.roleplay.a@example.com");
+        User participantB = saveUser("Early Roleplay B", "early.roleplay.b@example.com");
+        saveUserSkill(participantA);
+        saveUserSkill(participantB);
+
+        RoleplayScenario scenario = roleplayScenarioRepository.save(RoleplayScenario.builder()
+                .title("Customer Support")
+                .description("Handle a refund request")
+                .roleA("Customer")
+                .roleB("Manager")
+                .difficulty(DifficultyLevel.EASY)
+                .active(true)
+                .build());
+
+        RoleplaySession session = roleplaySessionRepository.save(RoleplaySession.builder()
+                .scenario(scenario)
+                .participantA(participantA)
+                .participantB(participantB)
+                .assignedRoleA("Customer")
+                .assignedRoleB("Manager")
+                .status(SessionStatus.ACTIVE)
+                .currentPhase(SessionStatus.ACTIVE)
+                .preparationSeconds(60)
+                .sessionDurationSeconds(180)
+                .startTime(LocalDateTime.now())
+                .endTime(LocalDateTime.now().plusMinutes(2))
+                .build());
+
+        assertThatThrownBy(() -> feedbackService.submitFeedback(
+                participantA.getId(),
+                roleplayRequest(session.getId(), participantB.getId(), 5)
+        ))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Roleplay feedback can be submitted after roleplay ends");
+    }
+
     private SubmitFeedbackRequest request(
             Long sessionId,
             Long targetUserId,
@@ -125,6 +215,25 @@ class FeedbackCompletionIntegrationTest {
         return SubmitFeedbackRequest.builder()
                 .sessionId(sessionId)
                 .sessionType(SessionType.DEBATE)
+                .targetUserId(targetUserId)
+                .fluencyRating(rating)
+                .pronunciationRating(rating)
+                .grammarRating(rating)
+                .confidenceRating(rating)
+                .empathyRating(rating)
+                .listeningRating(rating)
+                .engagementRating(rating)
+                .build();
+    }
+
+    private SubmitFeedbackRequest roleplayRequest(
+            Long sessionId,
+            Long targetUserId,
+            int rating
+    ) {
+        return SubmitFeedbackRequest.builder()
+                .sessionId(sessionId)
+                .sessionType(SessionType.ROLEPLAY)
                 .targetUserId(targetUserId)
                 .fluencyRating(rating)
                 .pronunciationRating(rating)

@@ -90,7 +90,7 @@ public class FeedbackService {
         if (request.getSessionType() == SessionType.DEBATE) {
             DebateSession session = debateSessionRepository.findById(request.getSessionId())
                     .orElseThrow(() -> new ResourceNotFoundException("Debate session not found"));
-            validateDebateFeedbackState(session.getStatus());
+            validateDebateFeedbackState(session);
 
             return validateParticipants(
                     evaluator,
@@ -102,7 +102,7 @@ public class FeedbackService {
 
         RoleplaySession session = roleplaySessionRepository.findById(request.getSessionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Roleplay session not found"));
-        validateRoleplayFeedbackState(session.getStatus());
+        validateRoleplayFeedbackState(session);
 
         return validateParticipants(
                 evaluator,
@@ -240,23 +240,39 @@ public class FeedbackService {
         }
     }
 
-    private void validateDebateFeedbackState(SessionStatus status) {
-        if (status == SessionStatus.CANCELLED) {
+    private void validateDebateFeedbackState(DebateSession session) {
+        if (session.getStatus() == SessionStatus.CANCELLED) {
             throw new BadRequestException("Cannot submit feedback for cancelled session");
         }
 
-        if (status != SessionStatus.ROUND_3 && status != SessionStatus.COMPLETED) {
+        if (session.getStatus() == SessionStatus.COMPLETED) {
+            return;
+        }
+
+        if (session.getStatus() != SessionStatus.ROUND_3) {
             throw new BadRequestException("Debate feedback can be submitted after the final round");
+        }
+
+        if (session.getRoundEndTime() == null || session.getRoundEndTime().isAfter(LocalDateTime.now())) {
+            throw new BadRequestException("Debate feedback can be submitted after the final round ends");
         }
     }
 
-    private void validateRoleplayFeedbackState(SessionStatus status) {
-        if (status == SessionStatus.CANCELLED) {
+    private void validateRoleplayFeedbackState(RoleplaySession session) {
+        if (session.getStatus() == SessionStatus.CANCELLED) {
             throw new BadRequestException("Cannot submit feedback for cancelled session");
         }
 
-        if (status != SessionStatus.ACTIVE && status != SessionStatus.COMPLETED) {
-            throw new BadRequestException("Roleplay feedback can be submitted after roleplay starts");
+        if (session.getStatus() == SessionStatus.COMPLETED) {
+            return;
+        }
+
+        if (session.getStatus() != SessionStatus.ACTIVE) {
+            throw new BadRequestException("Roleplay feedback can be submitted after roleplay is complete");
+        }
+
+        if (session.getEndTime() == null || session.getEndTime().isAfter(LocalDateTime.now())) {
+            throw new BadRequestException("Roleplay feedback can be submitted after roleplay ends");
         }
     }
 

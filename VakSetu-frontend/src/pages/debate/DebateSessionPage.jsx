@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import FeedbackForm from '../../components/feedback/FeedbackForm'
 import EmptyState from '../../components/common/EmptyState'
 import LoadingBlock from '../../components/common/LoadingBlock'
-import WebRtcSignalingPanel from '../../components/webrtc/WebRtcSignalingPanel'
+import WebRtcCallPanel from '../../components/webrtc/WebRtcCallPanel'
 import { useAuth } from '../../hooks/useAuth'
 import DebateService from '../../services/DebateService'
 
@@ -13,6 +13,7 @@ function DebateSessionPage() {
   const [session, setSession] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [currentTime, setCurrentTime] = useState(0)
 
   async function loadSession() {
     setSession(await DebateService.getSession(sessionId))
@@ -29,6 +30,17 @@ function DebateSessionPage() {
       .catch((exception) => setError(exception.message))
       .finally(() => setLoading(false))
   }, [sessionId])
+
+  useEffect(() => {
+    function updateCurrentTime() {
+      setCurrentTime(Date.now())
+    }
+
+    updateCurrentTime()
+    const intervalId = window.setInterval(updateCurrentTime, 30000)
+
+    return () => window.clearInterval(intervalId)
+  }, [])
 
   const partner = useMemo(() => {
     if (!session || !currentUser) {
@@ -56,6 +68,31 @@ function DebateSessionPage() {
     }
   }
 
+  async function advanceRound(action) {
+    setError('')
+
+    try {
+      await action(sessionId)
+      await loadSession()
+    } catch (exception) {
+      setError(exception.message)
+    }
+  }
+
+  const feedbackReady = useMemo(() => {
+    if (!session) {
+      return false
+    }
+
+    if (session.status === 'COMPLETED') {
+      return true
+    }
+
+    return session.status === 'ROUND_3'
+      && session.roundEndTime
+      && new Date(session.roundEndTime).getTime() <= currentTime
+  }, [currentTime, session])
+
   return (
     <section className="page-stack">
       <header>
@@ -73,6 +110,10 @@ function DebateSessionPage() {
             <strong>{session.status}</strong>
           </article>
           <article>
+            <span>Round</span>
+            <strong>{session.currentRound ?? 0}/{session.totalRounds ?? 3}</strong>
+          </article>
+          <article>
             <span>{session.participantAName}</span>
             <strong>{session.sideA}</strong>
           </article>
@@ -83,23 +124,44 @@ function DebateSessionPage() {
         </div>
       )}
       <div className="toolbar">
-        <button type="button" onClick={startSession}>
-          Start debate
-        </button>
+        {session?.status === 'MATCHED' && (
+          <button type="button" onClick={startSession}>
+            Start preparation
+          </button>
+        )}
+        {session?.status === 'PREPARATION' && (
+          <button type="button" onClick={() => advanceRound(DebateService.startRoundOne)}>
+            Start round 1
+          </button>
+        )}
+        {session?.status === 'ROUND_1' && (
+          <button type="button" onClick={() => advanceRound(DebateService.startRoundTwo)}>
+            Start round 2
+          </button>
+        )}
+        {session?.status === 'ROUND_2' && (
+          <button type="button" onClick={() => advanceRound(DebateService.startRoundThree)}>
+            Start round 3
+          </button>
+        )}
         <button type="button" className="ghost-button" onClick={loadSession}>
           Refresh
         </button>
       </div>
       {partner && (
         <>
-          <WebRtcSignalingPanel sessionId={sessionId} sessionType="DEBATE" partner={partner} />
-          <FeedbackForm
-            sessionId={Number(sessionId)}
-            sessionType="DEBATE"
-            targetUserId={partner.id}
-            targetName={partner.name}
-            onSubmitted={handleFeedbackSubmitted}
-          />
+          <WebRtcCallPanel sessionId={sessionId} sessionType="DEBATE" partner={partner} />
+          {feedbackReady ? (
+            <FeedbackForm
+              sessionId={Number(sessionId)}
+              sessionType="DEBATE"
+              targetUserId={partner.id}
+              targetName={partner.name}
+              onSubmitted={handleFeedbackSubmitted}
+            />
+          ) : (
+            <p className="state-text">Feedback opens after round 3 ends.</p>
+          )}
         </>
       )}
       {error && <p className="error-text">{error}</p>}

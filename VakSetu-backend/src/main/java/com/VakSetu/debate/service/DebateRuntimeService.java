@@ -20,6 +20,7 @@ public class DebateRuntimeService {
     @Transactional
     public DebateRuntimeResponse moveToPreparation(Long sessionId) {
         DebateSession session = loadSession(sessionId);
+        validateStatus(session, SessionStatus.MATCHED, "Cannot move to PREPARATION unless status is MATCHED");
         LocalDateTime now = LocalDateTime.now();
 
         session.setStatus(SessionStatus.PREPARATION);
@@ -40,6 +41,7 @@ public class DebateRuntimeService {
         session.setStatus(SessionStatus.ROUND_1);
         session.setCurrentRound(1);
         session.setCurrentSpeaker(session.getParticipantA());
+        session.setStartTime(now);
         session.setRoundStartTime(now);
         session.setRoundEndTime(now.plusSeconds(session.getRoundDurationSeconds()));
 
