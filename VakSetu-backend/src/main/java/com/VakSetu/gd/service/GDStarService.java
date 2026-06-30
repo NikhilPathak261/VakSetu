@@ -2,6 +2,7 @@ package com.vaksetu.gd.service;
 
 import com.vaksetu.common.enums.SessionStatus;
 import com.vaksetu.exception.BadRequestException;
+import com.vaksetu.exception.ConflictException;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.gd.dto.GiveStarRequest;
 import com.vaksetu.gd.dto.StarResponse;
@@ -62,7 +63,7 @@ public class GDStarService {
                         request.getReceiverId()
                 )
                 .ifPresent(star -> {
-                    throw new BadRequestException("Star already given");
+                    throw new ConflictException("Star already given");
                 });
 
         User giver = giverParticipant.getUser();

@@ -2,6 +2,7 @@ package com.vaksetu.roleplay.service;
 
 import com.vaksetu.common.constants.AppConstants;
 import com.vaksetu.common.enums.SessionStatus;
+import com.vaksetu.common.mapper.RoleplayMapper;
 import com.vaksetu.exception.BadRequestException;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.roleplay.dto.CreateRoleplaySessionRequest;
@@ -51,12 +52,12 @@ public class RoleplaySessionService {
                 .endTime(now.plusSeconds(AppConstants.ROLEPLAY_PREPARATION_SECONDS))
                 .build();
 
-        return mapToResponse(roleplaySessionRepository.save(roleplaySession));
+        return RoleplayMapper.toSessionResponse(roleplaySessionRepository.save(roleplaySession));
     }
 
     @Transactional(readOnly = true)
     public RoleplaySessionResponse getSession(Long sessionId) {
-        return mapToResponse(loadSession(sessionId));
+        return RoleplayMapper.toSessionResponse(loadSession(sessionId));
     }
 
     @Transactional
@@ -73,7 +74,7 @@ public class RoleplaySessionService {
         session.setStartTime(now);
         session.setEndTime(now.plusSeconds(session.getPreparationSeconds()));
 
-        return mapToResponse(roleplaySessionRepository.save(session));
+        return RoleplayMapper.toSessionResponse(roleplaySessionRepository.save(session));
     }
 
     @Transactional
@@ -88,7 +89,7 @@ public class RoleplaySessionService {
         session.setStartTime(now);
         session.setEndTime(now.plusSeconds(session.getSessionDurationSeconds()));
 
-        return mapToResponse(roleplaySessionRepository.save(session));
+        return RoleplayMapper.toSessionResponse(roleplaySessionRepository.save(session));
     }
 
     @Transactional
@@ -100,27 +101,6 @@ public class RoleplaySessionService {
     public RoleplaySession loadSession(Long sessionId) {
         return roleplaySessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Roleplay session not found"));
-    }
-
-    public RoleplaySessionResponse mapToResponse(RoleplaySession session) {
-        return RoleplaySessionResponse.builder()
-                .sessionId(session.getId())
-                .scenarioId(session.getScenario().getId())
-                .scenarioTitle(session.getScenario().getTitle())
-                .scenarioDescription(session.getScenario().getDescription())
-                .participantAId(session.getParticipantA().getId())
-                .participantAName(session.getParticipantA().getName())
-                .participantBId(session.getParticipantB().getId())
-                .participantBName(session.getParticipantB().getName())
-                .assignedRoleA(session.getAssignedRoleA())
-                .assignedRoleB(session.getAssignedRoleB())
-                .status(session.getStatus())
-                .currentPhase(session.getCurrentPhase())
-                .preparationSeconds(session.getPreparationSeconds())
-                .sessionDurationSeconds(session.getSessionDurationSeconds())
-                .startTime(session.getStartTime())
-                .endTime(session.getEndTime())
-                .build();
     }
 
     private RoleplayScenario selectRandomScenario() {

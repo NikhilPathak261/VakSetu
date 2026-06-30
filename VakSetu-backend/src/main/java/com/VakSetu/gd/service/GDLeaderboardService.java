@@ -1,5 +1,6 @@
 package com.vaksetu.gd.service;
 
+import com.vaksetu.common.mapper.GDMapper;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.gd.dto.GDLeaderboardResponse;
 import com.vaksetu.gd.dto.LeaderboardEntryResponse;
@@ -40,13 +41,11 @@ public class GDLeaderboardService {
             Long sessionId,
             GDParticipant participant
     ) {
-        return LeaderboardEntryResponse.builder()
-                .userId(participant.getUser().getId())
-                .userName(participant.getUser().getName())
-                .stars(sessionStarRepository.countBySessionIdAndReceiverId(
-                        sessionId,
-                        participant.getUser().getId()
-                ))
-                .build();
+        long stars = sessionStarRepository.countBySessionIdAndReceiverId(
+                sessionId,
+                participant.getUser().getId()
+        );
+
+        return GDMapper.toLeaderboardEntry(participant, stars);
     }
 }

@@ -7,6 +7,7 @@ import com.vaksetu.common.enums.Rank;
 import com.vaksetu.common.enums.Role;
 import com.vaksetu.common.enums.SessionStatus;
 import com.vaksetu.exception.BadRequestException;
+import com.vaksetu.exception.ConflictException;
 import com.vaksetu.gd.dto.CreateGDSessionRequest;
 import com.vaksetu.gd.dto.GDSessionResponse;
 import com.vaksetu.gd.dto.GiveStarRequest;
@@ -120,7 +121,7 @@ class GDServiceIntegrationTest {
         gdStarService.giveStar(giver.getId(), starRequest);
 
         assertThatThrownBy(() -> gdStarService.giveStar(giver.getId(), starRequest))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(ConflictException.class)
                 .hasMessage("Star already given");
 
         assertThatThrownBy(() -> gdStarService.giveStar(receiver.getId(), GiveStarRequest.builder()
@@ -140,6 +141,78 @@ class GDServiceIntegrationTest {
         assertCoreScoreUnchanged(updatedReceiver, updatedReceiverSkill);
         assertThat(skillHistoryRepository.findByUserId(receiver.getId())).isEmpty();
         assertThat(reputationHistoryRepository.findByUserId(receiver.getId())).isEmpty();
+    }
+
+    @Test
+    void closingGdRoomIgnoresParticipantsWhoAlreadyLeft() {
+        User creator = saveUser("GD Active Creator", "gd.active.creator@example.com");
+        User activeReceiver = saveUser("GD Active Receiver", "gd.active.receiver@example.com");
+        User leftReceiver = saveUser("GD Left Receiver", "gd.left.receiver@example.com");
+        saveUserSkill(creator);
+        saveUserSkill(activeReceiver);
+        saveUserSkill(leftReceiver);
+
+        GDSessionResponse room = gdSessionService.createRoom(
+                creator.getId(),
+                CreateGDSessionRequest.builder()
+                        .topic("Active participant source of truth")
+                        .maxParticipants(4)
+                        .build()
+        );
+        gdSessionService.joinRoom(activeReceiver.getId(), room.getSessionId());
+        gdSessionService.joinRoom(leftReceiver.getId(), room.getSessionId());
+        gdSessionService.markSpoken(activeReceiver.getId(), room.getSessionId());
+        gdSessionService.markSpoken(leftReceiver.getId(), room.getSessionId());
+        gdStarService.giveStar(creator.getId(), GiveStarRequest.builder()
+                .sessionId(room.getSessionId())
+                .receiverId(activeReceiver.getId())
+                .build());
+        gdStarService.giveStar(activeReceiver.getId(), GiveStarRequest.builder()
+                .sessionId(room.getSessionId())
+                .receiverId(leftReceiver.getId())
+                .build());
+
+        gdSessionService.leaveRoom(leftReceiver.getId(), room.getSessionId());
+        gdSessionService.closeRoom(creator.getId(), room.getSessionId());
+
+        entityManager.flush();
+        entityManager.clear();
+
+        User updatedActiveReceiver = userRepository.findById(activeReceiver.getId()).orElseThrow();
+        User updatedLeftReceiver = userRepository.findById(leftReceiver.getId()).orElseThrow();
+
+        assertThat(updatedActiveReceiver.getHighestSessionStars()).isEqualTo(1);
+        assertThat(updatedActiveReceiver.getTopContributorFinishes()).isEqualTo(1);
+        assertThat(updatedLeftReceiver.getHighestSessionStars()).isZero();
+        assertThat(updatedLeftReceiver.getTopContributorFinishes()).isZero();
+    }
+
+    @Test
+    void closingGdRoomWithoutStarsDoesNotAwardTopContributorFinish() {
+        User creator = saveUser("GD No Stars Creator", "gd.no.stars.creator@example.com");
+        User participant = saveUser("GD No Stars Participant", "gd.no.stars.participant@example.com");
+        saveUserSkill(creator);
+        saveUserSkill(participant);
+
+        GDSessionResponse room = gdSessionService.createRoom(
+                creator.getId(),
+                CreateGDSessionRequest.builder()
+                        .topic("No star close")
+                        .maxParticipants(3)
+                        .build()
+        );
+        gdSessionService.joinRoom(participant.getId(), room.getSessionId());
+
+        gdSessionService.closeRoom(creator.getId(), room.getSessionId());
+
+        entityManager.flush();
+        entityManager.clear();
+
+        User updatedCreator = userRepository.findById(creator.getId()).orElseThrow();
+        User updatedParticipant = userRepository.findById(participant.getId()).orElseThrow();
+
+        assertThat(updatedCreator.getTopContributorFinishes()).isZero();
+        assertThat(updatedParticipant.getTopContributorFinishes()).isZero();
     }
 
     @Test

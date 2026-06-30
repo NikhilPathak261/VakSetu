@@ -2,6 +2,7 @@ package com.vaksetu.gd.service;
 
 import com.vaksetu.common.constants.AppConstants;
 import com.vaksetu.common.enums.SessionStatus;
+import com.vaksetu.common.mapper.GDMapper;
 import com.vaksetu.exception.BadRequestException;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.gd.dto.CreateGDSessionRequest;
@@ -69,7 +70,7 @@ public class GDSessionService {
         gdParticipantRepository.save(creatorParticipant);
 
         statisticsService.incrementGdSessionsJoined(creator);
-        GDSessionResponse response = mapToResponse(savedSession);
+        GDSessionResponse response = GDMapper.toSessionResponse(savedSession);
         eventPublisherService.publishGdRoomCreated(savedSession.getId(), creator.getId(), response);
 
         return response;
@@ -77,14 +78,14 @@ public class GDSessionService {
 
     @Transactional(readOnly = true)
     public GDSessionResponse getRoom(Long sessionId) {
-        return mapToResponse(loadRoom(sessionId));
+        return GDMapper.toSessionResponse(loadRoom(sessionId));
     }
 
     @Transactional(readOnly = true)
     public List<GDSessionResponse> getActiveRooms() {
         return gdSessionRepository.findByStatus(SessionStatus.ACTIVE)
                 .stream()
-                .map(this::mapToResponse)
+                .map(GDMapper::toSessionResponse)
                 .toList();
     }
 
@@ -106,7 +107,8 @@ public class GDSessionService {
             throw new BadRequestException("Already joined this room");
         }
 
-        if (session.getCurrentParticipants() >= session.getMaxParticipants()) {
+        long activeParticipantCount = gdParticipantRepository.countBySessionIdAndLeftAtIsNull(sessionId);
+        if (activeParticipantCount >= session.getMaxParticipants()) {
             throw new BadRequestException("Room is full");
         }
 
@@ -120,11 +122,11 @@ public class GDSessionService {
 
         gdParticipantRepository.save(participant);
 
-        session.setCurrentParticipants(session.getCurrentParticipants() + 1);
+        session.setCurrentParticipants(Math.toIntExact(activeParticipantCount + 1));
         GroupDiscussionSession savedSession = gdSessionRepository.save(session);
 
         statisticsService.incrementGdSessionsJoined(user);
-        JoinLeaveRoomResponse response = mapToJoinLeaveRoomResponse(savedSession, user, "Joined successfully");
+        JoinLeaveRoomResponse response = GDMapper.toJoinLeaveRoomResponse(savedSession, user, "Joined successfully");
         eventPublisherService.publishUserJoined(savedSession.getId(), user.getId(), response);
 
         return response;
@@ -146,7 +148,7 @@ public class GDSessionService {
         participant.setLeftAt(LocalDateTime.now());
         gdParticipantRepository.save(participant);
 
-        int currentParticipants = Math.max(0, session.getCurrentParticipants() - 1);
+        int currentParticipants = Math.toIntExact(gdParticipantRepository.countBySessionIdAndLeftAtIsNull(sessionId));
         session.setCurrentParticipants(currentParticipants);
 
         if (currentParticipants == 0) {
@@ -160,7 +162,7 @@ public class GDSessionService {
         }
 
         GroupDiscussionSession savedSession = gdSessionRepository.save(session);
-        JoinLeaveRoomResponse response = mapToJoinLeaveRoomResponse(savedSession, participant.getUser(), "Left successfully");
+        JoinLeaveRoomResponse response = GDMapper.toJoinLeaveRoomResponse(savedSession, participant.getUser(), "Left successfully");
         eventPublisherService.publishUserLeft(savedSession.getId(), participant.getUser().getId(), response);
 
         return response;
@@ -210,7 +212,7 @@ public class GDSessionService {
             throw new BadRequestException("Room is not active");
         }
 
-        List<GDParticipant> participants = gdParticipantRepository.findBySessionId(sessionId);
+        List<GDParticipant> participants = gdParticipantRepository.findBySessionIdAndLeftAtIsNull(sessionId);
         Map<Long, Long> starsByUserId = participants.stream()
                 .collect(Collectors.toMap(
                         participant -> participant.getUser().getId(),
@@ -229,7 +231,8 @@ public class GDSessionService {
                 .limit(3)
                 .toList();
 
-        if (!topParticipants.isEmpty()) {
+        if (!topParticipants.isEmpty()
+                && starsByUserId.getOrDefault(topParticipants.get(0).getUser().getId(), 0L) > 0) {
             User winner = topParticipants.get(0).getUser();
             statisticsService.incrementTopContributorFinishes(winner);
             contributorBadgeService.updateBadge(winner);
@@ -241,7 +244,8 @@ public class GDSessionService {
         ));
 
         session.setStatus(SessionStatus.COMPLETED);
-        GDSessionResponse response = mapToResponse(gdSessionRepository.save(session));
+        session.setCurrentParticipants(participants.size());
+        GDSessionResponse response = GDMapper.toSessionResponse(gdSessionRepository.save(session));
         eventPublisherService.publishLeaderboardUpdated(session.getId(), starsByUserId);
         eventPublisherService.publishGdRoomClosed(session.getId(), creatorId, response);
 
@@ -252,34 +256,6 @@ public class GDSessionService {
     public GroupDiscussionSession loadRoom(Long sessionId) {
         return gdSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Group discussion session not found"));
-    }
-
-    public GDSessionResponse mapToResponse(GroupDiscussionSession session) {
-        return GDSessionResponse.builder()
-                .sessionId(session.getId())
-                .topic(session.getTopic())
-                .creatorId(session.getCreator().getId())
-                .creatorName(session.getCreator().getName())
-                .status(session.getStatus())
-                .currentParticipants(session.getCurrentParticipants())
-                .maxParticipants(session.getMaxParticipants())
-                .createdAt(session.getCreatedAt())
-                .build();
-    }
-
-    private JoinLeaveRoomResponse mapToJoinLeaveRoomResponse(
-            GroupDiscussionSession session,
-            User user,
-            String message
-    ) {
-        return JoinLeaveRoomResponse.builder()
-                .sessionId(session.getId())
-                .userId(user.getId())
-                .userName(user.getName())
-                .message(message)
-                .currentParticipants(session.getCurrentParticipants())
-                .maxParticipants(session.getMaxParticipants())
-                .build();
     }
 
     private void validateMaxParticipants(Integer maxParticipants) {
