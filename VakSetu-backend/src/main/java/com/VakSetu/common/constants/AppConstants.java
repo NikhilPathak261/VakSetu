@@ -3,6 +3,7 @@ package com.vaksetu.common.constants;
 public final class AppConstants {
 
     public static final Integer INITIAL_SKILL_SCORE = 50;
+    public static final Double INITIAL_OVERALL_SCORE = 50.0;
     public static final Integer INITIAL_REPUTATION = 50;
 
     public static final Integer MAX_REPUTATION = 100;

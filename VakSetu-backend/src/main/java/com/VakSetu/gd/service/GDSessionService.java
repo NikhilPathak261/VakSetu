@@ -13,6 +13,7 @@ import com.vaksetu.gd.entity.GroupDiscussionSession;
 import com.vaksetu.gd.repository.GDParticipantRepository;
 import com.vaksetu.gd.repository.GDSessionRepository;
 import com.vaksetu.gd.repository.SessionStarRepository;
+import com.vaksetu.statistics.service.StatisticsService;
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.repository.UserRepository;
 import com.vaksetu.websocket.service.EventPublisherService;

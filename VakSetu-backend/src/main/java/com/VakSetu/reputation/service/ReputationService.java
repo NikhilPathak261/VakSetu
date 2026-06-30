@@ -27,13 +27,14 @@ public class ReputationService {
                 AppConstants.MIN_REPUTATION,
                 Math.min(AppConstants.MAX_REPUTATION, currentReputation + changeAmount)
         );
+        int actualChangeAmount = newReputation - currentReputation;
 
         user.setReputation(newReputation);
         userRepository.save(user);
 
         reputationHistoryRepository.save(ReputationHistory.builder()
                 .user(user)
-                .changeAmount(changeAmount)
+                .changeAmount(actualChangeAmount)
                 .reason(reason)
                 .build());
     }

@@ -7,16 +7,19 @@ import com.vaksetu.auth.dto.RefreshTokenRequest;
 import com.vaksetu.auth.dto.RegisterRequest;
 import com.vaksetu.auth.entity.RefreshToken;
 import com.vaksetu.auth.repository.RefreshTokenRepository;
+import com.vaksetu.common.constants.AppConstants;
 import com.vaksetu.common.enums.Rank;
 import com.vaksetu.common.enums.Role;
 import com.vaksetu.exception.ConflictException;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.exception.UnauthorizedException;
+import com.vaksetu.security.JwtProperties;
 import com.vaksetu.security.JwtTokenProvider;
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.entity.UserSkill;
 import com.vaksetu.user.repository.UserRepository;
 import com.vaksetu.user.repository.UserSkillRepository;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +36,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtProperties jwtProperties;
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -43,8 +47,8 @@ public class AuthService {
                 .name(request.getName())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .overallScore(50.0)
-                .reputation(50)
+                .overallScore(AppConstants.INITIAL_OVERALL_SCORE)
+                .reputation(AppConstants.INITIAL_REPUTATION)
                 .rank(Rank.CONVERSATIONALIST)
                 .role(Role.USER)
                 .totalStars(0)
@@ -60,13 +64,13 @@ public class AuthService {
 
         UserSkill userSkill = UserSkill.builder()
                 .user(savedUser)
-                .fluency(50.0)
-                .pronunciation(50.0)
-                .grammar(50.0)
-                .confidence(50.0)
-                .empathy(50.0)
-                .listening(50.0)
-                .engagement(50.0)
+                .fluency(AppConstants.INITIAL_SKILL_SCORE.doubleValue())
+                .pronunciation(AppConstants.INITIAL_SKILL_SCORE.doubleValue())
+                .grammar(AppConstants.INITIAL_SKILL_SCORE.doubleValue())
+                .confidence(AppConstants.INITIAL_SKILL_SCORE.doubleValue())
+                .empathy(AppConstants.INITIAL_SKILL_SCORE.doubleValue())
+                .listening(AppConstants.INITIAL_SKILL_SCORE.doubleValue())
+                .engagement(AppConstants.INITIAL_SKILL_SCORE.doubleValue())
                 .build();
 
         userSkillRepository.save(userSkill);
@@ -158,6 +162,6 @@ public class AuthService {
     }
 
     private LocalDateTime calculateRefreshTokenExpiryDate() {
-        return LocalDateTime.now().plusDays(30);
+        return LocalDateTime.now().plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpiration()));
     }
 }

@@ -1,5 +1,6 @@
 package com.vaksetu.feedback.service;
 
+import com.vaksetu.common.constants.AppConstants;
 import com.vaksetu.feedback.dto.SkillRatingScores;
 import com.vaksetu.feedback.entity.Feedback;
 import com.vaksetu.user.entity.UserSkill;
@@ -70,7 +71,7 @@ public class RatingCalculationService {
 
         private double value() {
             if (weightTotal == 0.0) {
-                return 50.0;
+                return AppConstants.INITIAL_SKILL_SCORE.doubleValue();
             }
 
             return weightedTotal / weightTotal;

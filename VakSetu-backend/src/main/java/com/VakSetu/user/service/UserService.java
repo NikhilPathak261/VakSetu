@@ -1,5 +1,6 @@
 package com.vaksetu.user.service;
 
+import com.vaksetu.common.mapper.UserMapper;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.user.dto.UpdateProfileRequest;
 import com.vaksetu.user.dto.UserProfileResponse;
@@ -26,7 +27,7 @@ public class UserService {
         UserSkill userSkill = userSkillRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User skill not found"));
 
-        return buildUserProfileResponse(user, userSkill);
+        return UserMapper.toProfileResponse(user, userSkill);
     }
 
     @Transactional
@@ -42,25 +43,6 @@ public class UserService {
         UserSkill userSkill = userSkillRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User skill not found"));
 
-        return buildUserProfileResponse(user, userSkill);
-    }
-
-    private UserProfileResponse buildUserProfileResponse(User user, UserSkill userSkill) {
-        return UserProfileResponse.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .overallScore(user.getOverallScore())
-                .reputation(user.getReputation())
-                .rank(user.getRank())
-                .contributorBadge(user.getContributorBadge())
-                .fluency(userSkill.getFluency())
-                .pronunciation(userSkill.getPronunciation())
-                .grammar(userSkill.getGrammar())
-                .confidence(userSkill.getConfidence())
-                .empathy(userSkill.getEmpathy())
-                .listening(userSkill.getListening())
-                .engagement(userSkill.getEngagement())
-                .build();
+        return UserMapper.toProfileResponse(user, userSkill);
     }
 }

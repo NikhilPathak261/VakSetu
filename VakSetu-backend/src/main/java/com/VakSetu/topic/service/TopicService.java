@@ -1,5 +1,7 @@
 package com.vaksetu.topic.service;
 
+import com.vaksetu.common.mapper.TopicMapper;
+import com.vaksetu.exception.ConflictException;
 import com.vaksetu.exception.ResourceNotFoundException;
 import com.vaksetu.topic.dto.CreateTopicRequest;
 import com.vaksetu.topic.dto.TopicResponse;
@@ -20,12 +22,16 @@ public class TopicService {
     public List<TopicResponse> getAllActiveTopics() {
         return topicRepository.findByActiveTrue()
                 .stream()
-                .map(this::toTopicResponse)
+                .map(TopicMapper::toResponse)
                 .toList();
     }
 
     @Transactional
     public TopicResponse createTopic(CreateTopicRequest request) {
+        if (topicRepository.existsByTitleIgnoreCase(request.getTitle())) {
+            throw new ConflictException("Topic already exists");
+        }
+
         Topic topic = Topic.builder()
                 .title(request.getTitle())
                 .category(request.getCategory())
@@ -34,7 +40,7 @@ public class TopicService {
 
         Topic savedTopic = topicRepository.save(topic);
 
-        return toTopicResponse(savedTopic);
+        return TopicMapper.toResponse(savedTopic);
     }
 
     @Transactional
@@ -43,14 +49,5 @@ public class TopicService {
                 .orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
 
         topic.setActive(false);
-    }
-
-    private TopicResponse toTopicResponse(Topic topic) {
-        return TopicResponse.builder()
-                .id(topic.getId())
-                .title(topic.getTitle())
-                .category(topic.getCategory())
-                .active(topic.getActive())
-                .build();
     }
 }

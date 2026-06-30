@@ -1,4 +1,4 @@
-package com.vaksetu.gd.service;
+package com.vaksetu.statistics.service;
 
 import com.vaksetu.user.entity.User;
 import com.vaksetu.user.repository.UserRepository;
