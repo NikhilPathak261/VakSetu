@@ -16,6 +16,7 @@ function GDRoomPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const roomActionsDisabled = loading || !room || room.status !== 'ACTIVE'
 
   async function loadRoom() {
     const [roomResponse, leaderboardResponse] = await Promise.all([
@@ -71,6 +72,32 @@ function GDRoomPage() {
     try {
       const response = await GDService.markSpoken(sessionId)
       setMessage(response.message)
+    } catch (exception) {
+      setError(exception.message)
+    }
+  }
+
+  async function joinRoom() {
+    setError('')
+    setMessage('')
+
+    try {
+      const response = await GDService.joinRoom(sessionId)
+      setMessage(response.message)
+      await loadRoom()
+    } catch (exception) {
+      setError(exception.message)
+    }
+  }
+
+  async function leaveRoom() {
+    setError('')
+    setMessage('')
+
+    try {
+      const response = await GDService.leaveRoom(sessionId)
+      setMessage(response.message)
+      await loadRoom()
     } catch (exception) {
       setError(exception.message)
     }
@@ -133,10 +160,16 @@ function GDRoomPage() {
         </div>
       )}
       <div className="toolbar">
-        <button type="button" onClick={markSpoken} disabled={loading || !room}>
+        <button type="button" onClick={joinRoom} disabled={roomActionsDisabled}>
+          Join room
+        </button>
+        <button type="button" className="ghost-button" onClick={leaveRoom} disabled={roomActionsDisabled}>
+          Leave room
+        </button>
+        <button type="button" onClick={markSpoken} disabled={roomActionsDisabled}>
           Mark spoken
         </button>
-        <button type="button" className="ghost-button" onClick={closeRoom} disabled={loading || !room}>
+        <button type="button" className="ghost-button" onClick={closeRoom} disabled={roomActionsDisabled}>
           Close room
         </button>
         <button type="button" className="ghost-button" onClick={loadRoom} disabled={loading}>
@@ -152,7 +185,7 @@ function GDRoomPage() {
           onChange={(event) => setReceiverId(event.target.value)}
           required
         />
-        <button type="submit" disabled={loading || !room}>Give star</button>
+        <button type="submit" disabled={roomActionsDisabled}>Give star</button>
       </form>
       <div className="list-grid">
         {!loading && leaderboard.length === 0 && (
