@@ -63,14 +63,17 @@ function DebateLobbyPage() {
         <h1>Debate queue</h1>
       </header>
       <div className="toolbar">
-        <select value={topicId} onChange={(event) => setTopicId(event.target.value)}>
-          <option value="">Choose topic</option>
-          {topics.map((topic) => (
-            <option key={topic.id} value={topic.id}>
-              {topic.title}
-            </option>
-          ))}
-        </select>
+        <label>
+          Topic
+          <select value={topicId} onChange={(event) => setTopicId(event.target.value)}>
+            <option value="">Choose topic</option>
+            {topics.map((topic) => (
+              <option key={topic.id} value={topic.id}>
+                {topic.title}
+              </option>
+            ))}
+          </select>
+        </label>
         <button type="button" onClick={joinQueue} disabled={!topicId}>
           Join queue
         </button>
