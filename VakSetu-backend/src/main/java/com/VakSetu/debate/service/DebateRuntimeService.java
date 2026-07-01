@@ -1,6 +1,7 @@
 package com.vaksetu.debate.service;
 
 import com.vaksetu.common.enums.SessionStatus;
+import com.vaksetu.common.mapper.DebateMapper;
 import com.vaksetu.debate.dto.DebateRuntimeResponse;
 import com.vaksetu.debate.entity.DebateSession;
 import com.vaksetu.debate.repository.DebateSessionRepository;
@@ -29,7 +30,7 @@ public class DebateRuntimeService {
         session.setRoundStartTime(now);
         session.setRoundEndTime(now.plusSeconds(session.getPreparationSeconds()));
 
-        return mapToRuntimeResponse(debateSessionRepository.save(session));
+        return DebateMapper.toRuntimeResponse(debateSessionRepository.save(session));
     }
 
     @Transactional
@@ -46,7 +47,7 @@ public class DebateRuntimeService {
         session.setRoundStartTime(now);
         session.setRoundEndTime(now.plusSeconds(session.getRoundDurationSeconds()));
 
-        return mapToRuntimeResponse(debateSessionRepository.save(session));
+        return DebateMapper.toRuntimeResponse(debateSessionRepository.save(session));
     }
 
     @Transactional
@@ -62,7 +63,7 @@ public class DebateRuntimeService {
         session.setRoundStartTime(now);
         session.setRoundEndTime(now.plusSeconds(session.getRoundDurationSeconds()));
 
-        return mapToRuntimeResponse(debateSessionRepository.save(session));
+        return DebateMapper.toRuntimeResponse(debateSessionRepository.save(session));
     }
 
     @Transactional
@@ -78,7 +79,7 @@ public class DebateRuntimeService {
         session.setRoundStartTime(now);
         session.setRoundEndTime(now.plusSeconds(session.getRoundDurationSeconds()));
 
-        return mapToRuntimeResponse(debateSessionRepository.save(session));
+        return DebateMapper.toRuntimeResponse(debateSessionRepository.save(session));
     }
 
     @Transactional
@@ -88,7 +89,7 @@ public class DebateRuntimeService {
 
     @Transactional(readOnly = true)
     public DebateRuntimeResponse getRuntime(Long sessionId) {
-        return mapToRuntimeResponse(loadSession(sessionId));
+        return DebateMapper.toRuntimeResponse(loadSession(sessionId));
     }
 
     private DebateSession loadSession(Long sessionId) {
@@ -113,27 +114,5 @@ public class DebateRuntimeService {
         if (windowEndTime == null || windowEndTime.isAfter(LocalDateTime.now())) {
             throw new BadRequestException(message);
         }
-    }
-
-    private DebateRuntimeResponse mapToRuntimeResponse(DebateSession session) {
-        Long currentSpeakerId = session.getCurrentSpeaker() == null
-                ? null
-                : session.getCurrentSpeaker().getId();
-        String currentSpeakerName = session.getCurrentSpeaker() == null
-                ? null
-                : session.getCurrentSpeaker().getName();
-
-        return DebateRuntimeResponse.builder()
-                .sessionId(session.getId())
-                .status(session.getStatus())
-                .currentRound(session.getCurrentRound())
-                .totalRounds(session.getTotalRounds())
-                .currentSpeakerId(currentSpeakerId)
-                .currentSpeakerName(currentSpeakerName)
-                .roundStartTime(session.getRoundStartTime())
-                .roundEndTime(session.getRoundEndTime())
-                .preparationSeconds(session.getPreparationSeconds())
-                .roundDurationSeconds(session.getRoundDurationSeconds())
-                .build();
     }
 }

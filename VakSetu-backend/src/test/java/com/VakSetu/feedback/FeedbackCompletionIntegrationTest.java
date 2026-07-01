@@ -10,15 +10,19 @@ import com.vaksetu.common.enums.SessionStatus;
 import com.vaksetu.common.enums.SessionType;
 import com.vaksetu.debate.entity.DebateSession;
 import com.vaksetu.debate.repository.DebateSessionRepository;
+import com.vaksetu.debate.dto.CreateDebateSessionRequest;
+import com.vaksetu.debate.service.DebateSessionService;
 import com.vaksetu.feedback.dto.FeedbackResponse;
 import com.vaksetu.feedback.dto.SubmitFeedbackRequest;
 import com.vaksetu.feedback.service.FeedbackService;
 import com.vaksetu.exception.BadRequestException;
 import com.vaksetu.reputation.repository.ReputationHistoryRepository;
+import com.vaksetu.roleplay.dto.CreateRoleplaySessionRequest;
 import com.vaksetu.roleplay.entity.RoleplayScenario;
 import com.vaksetu.roleplay.entity.RoleplaySession;
 import com.vaksetu.roleplay.repository.RoleplayScenarioRepository;
 import com.vaksetu.roleplay.repository.RoleplaySessionRepository;
+import com.vaksetu.roleplay.service.RoleplaySessionService;
 import com.vaksetu.skill.repository.SkillHistoryRepository;
 import com.vaksetu.topic.entity.Topic;
 import com.vaksetu.topic.repository.TopicRepository;
@@ -41,6 +45,12 @@ class FeedbackCompletionIntegrationTest {
 
     @Autowired
     private FeedbackService feedbackService;
+
+    @Autowired
+    private DebateSessionService debateSessionService;
+
+    @Autowired
+    private RoleplaySessionService roleplaySessionService;
 
     @Autowired
     private UserRepository userRepository;
@@ -205,6 +215,75 @@ class FeedbackCompletionIntegrationTest {
         ))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessage("Roleplay feedback can be submitted after roleplay ends");
+    }
+
+    @Test
+    void rejectsFeedbackAfterSessionIsAlreadyCompleted() {
+        User participantA = saveUser("Completed Feedback A", "completed.feedback.a@example.com");
+        User participantB = saveUser("Completed Feedback B", "completed.feedback.b@example.com");
+        saveUserSkill(participantA);
+        saveUserSkill(participantB);
+
+        Topic topic = topicRepository.save(Topic.builder()
+                .title("Completed Feedback")
+                .category("Communication")
+                .active(true)
+                .build());
+
+        DebateSession session = debateSessionRepository.save(DebateSession.builder()
+                .topic(topic)
+                .participantA(participantA)
+                .participantB(participantB)
+                .sideA(DebateSide.FOR)
+                .sideB(DebateSide.AGAINST)
+                .status(SessionStatus.COMPLETED)
+                .currentRound(3)
+                .totalRounds(3)
+                .preparationSeconds(120)
+                .roundDurationSeconds(180)
+                .endTime(LocalDateTime.now().minusMinutes(1))
+                .build());
+
+        assertThatThrownBy(() -> feedbackService.submitFeedback(
+                participantA.getId(),
+                request(session.getId(), participantB.getId(), 5)
+        ))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Cannot submit feedback for completed session");
+    }
+
+    @Test
+    void rejectsSelfDebateAndRoleplaySessions() {
+        User participant = saveUser("Self Session User", "self.session@example.com");
+        saveUserSkill(participant);
+        Topic topic = topicRepository.save(Topic.builder()
+                .title("Self Session Debate")
+                .category("Communication")
+                .active(true)
+                .build());
+        roleplayScenarioRepository.save(RoleplayScenario.builder()
+                .title("Self Session Roleplay")
+                .description("A self roleplay scenario")
+                .roleA("User A")
+                .roleB("User B")
+                .difficulty(DifficultyLevel.EASY)
+                .active(true)
+                .build());
+
+        assertThatThrownBy(() -> debateSessionService.createSession(CreateDebateSessionRequest.builder()
+                .topicId(topic.getId())
+                .participantAId(participant.getId())
+                .participantBId(participant.getId())
+                .build()))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Debate participants must be different");
+
+        assertThatThrownBy(() -> roleplaySessionService.createSession(CreateRoleplaySessionRequest.builder()
+                .participantAId(participant.getId())
+                .participantBId(participant.getId())
+                .build()))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Roleplay participants must be different");
     }
 
     private SubmitFeedbackRequest request(

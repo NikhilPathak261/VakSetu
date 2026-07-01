@@ -2,6 +2,7 @@ package com.vaksetu.debate.service;
 
 import com.vaksetu.common.enums.DebateSide;
 import com.vaksetu.common.enums.SessionStatus;
+import com.vaksetu.common.mapper.DebateMapper;
 import com.vaksetu.debate.dto.CreateDebateSessionRequest;
 import com.vaksetu.debate.dto.DebateSessionResponse;
 import com.vaksetu.debate.entity.DebateSession;
@@ -28,6 +29,10 @@ public class DebateSessionService {
 
     @Transactional
     public DebateSessionResponse createSession(CreateDebateSessionRequest request) {
+        if (request.getParticipantAId().equals(request.getParticipantBId())) {
+            throw new BadRequestException("Debate participants must be different");
+        }
+
         Topic topic = topicRepository.findById(request.getTopicId())
                 .orElseThrow(() -> new ResourceNotFoundException("Topic not found"));
         User participantA = userRepository.findById(request.getParticipantAId())
@@ -54,14 +59,14 @@ public class DebateSessionService {
 
         DebateSession savedSession = debateSessionRepository.save(debateSession);
 
-        return mapToResponse(savedSession);
+        return DebateMapper.toSessionResponse(savedSession);
     }
 
     @Transactional(readOnly = true)
     public DebateSessionResponse getSession(Long sessionId) {
         DebateSession session = loadSession(sessionId);
 
-        return mapToResponse(session);
+        return DebateMapper.toSessionResponse(session);
     }
 
     @Transactional
@@ -76,7 +81,7 @@ public class DebateSessionService {
         session.setRoundEndTime(now.plusSeconds(session.getPreparationSeconds()));
         DebateSession savedSession = debateSessionRepository.save(session);
 
-        return mapToResponse(savedSession);
+        return DebateMapper.toSessionResponse(savedSession);
     }
 
     @Transactional
@@ -97,26 +102,5 @@ public class DebateSessionService {
         if (session.getStatus() != expectedStatus) {
             throw new BadRequestException(message);
         }
-    }
-
-    private DebateSessionResponse mapToResponse(DebateSession session) {
-        return DebateSessionResponse.builder()
-                .id(session.getId())
-                .topicId(session.getTopic().getId())
-                .topicTitle(session.getTopic().getTitle())
-                .participantAId(session.getParticipantA().getId())
-                .participantAName(session.getParticipantA().getName())
-                .participantBId(session.getParticipantB().getId())
-                .participantBName(session.getParticipantB().getName())
-                .sideA(session.getSideA())
-                .sideB(session.getSideB())
-                .status(session.getStatus())
-                .currentRound(session.getCurrentRound())
-                .totalRounds(session.getTotalRounds())
-                .roundStartTime(session.getRoundStartTime())
-                .roundEndTime(session.getRoundEndTime())
-                .startTime(session.getStartTime())
-                .endTime(session.getEndTime())
-                .build();
     }
 }

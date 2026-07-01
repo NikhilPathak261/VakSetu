@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,7 +22,19 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "feedback")
+@Table(
+        name = "feedback",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        columnNames = {
+                                "session_id",
+                                "session_type",
+                                "evaluator_id",
+                                "target_user_id"
+                        }
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

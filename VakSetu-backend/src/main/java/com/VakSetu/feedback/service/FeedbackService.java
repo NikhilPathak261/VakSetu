@@ -246,7 +246,7 @@ public class FeedbackService {
         }
 
         if (session.getStatus() == SessionStatus.COMPLETED) {
-            return;
+            throw new BadRequestException("Cannot submit feedback for completed session");
         }
 
         if (session.getStatus() != SessionStatus.ROUND_3) {
@@ -264,7 +264,7 @@ public class FeedbackService {
         }
 
         if (session.getStatus() == SessionStatus.COMPLETED) {
-            return;
+            throw new BadRequestException("Cannot submit feedback for completed session");
         }
 
         if (session.getStatus() != SessionStatus.ACTIVE) {

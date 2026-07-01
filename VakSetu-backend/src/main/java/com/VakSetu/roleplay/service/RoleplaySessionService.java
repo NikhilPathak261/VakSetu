@@ -30,6 +30,10 @@ public class RoleplaySessionService {
 
     @Transactional
     public RoleplaySessionResponse createSession(CreateRoleplaySessionRequest request) {
+        if (request.getParticipantAId().equals(request.getParticipantBId())) {
+            throw new BadRequestException("Roleplay participants must be different");
+        }
+
         User participantA = userRepository.findById(request.getParticipantAId())
                 .orElseThrow(() -> new ResourceNotFoundException("Participant A not found"));
         User participantB = userRepository.findById(request.getParticipantBId())
