@@ -26,10 +26,6 @@ public class DebateQueueService {
     private final UserSkillRepository userSkillRepository;
 
     public void addUser(Long userId, Long topicId) {
-        if (queue.containsKey(userId)) {
-            throw new ConflictException("User already in debate queue");
-        }
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         UserSkill userSkill = userSkillRepository.findByUserId(userId)
@@ -42,7 +38,9 @@ public class DebateQueueService {
                 .joinedAt(LocalDateTime.now())
                 .build();
 
-        queue.put(userId, queueEntry);
+        if (queue.putIfAbsent(userId, queueEntry) != null) {
+            throw new ConflictException("User already in debate queue");
+        }
     }
 
     public void removeUser(Long userId) {
@@ -59,6 +57,14 @@ public class DebateQueueService {
 
     public Collection<DebateQueueEntry> getAllEntries() {
         return queue.values();
+    }
+
+    public boolean containsUser(Long userId) {
+        return queue.containsKey(userId);
+    }
+
+    public int size() {
+        return queue.size();
     }
 
     public int removeEntriesJoinedBefore(LocalDateTime cutoffTime) {

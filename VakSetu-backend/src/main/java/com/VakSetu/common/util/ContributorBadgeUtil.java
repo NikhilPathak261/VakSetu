@@ -10,7 +10,7 @@ public final class ContributorBadgeUtil {
 
     public static BadgeType calculateBadge(Integer finishes) {
         if (finishes == null || finishes < AppConstants.RISING_CONTRIBUTOR_THRESHOLD) {
-            return null;
+            return BadgeType.NONE;
         }
 
         if (finishes >= AppConstants.COMMUNITY_VOICE_THRESHOLD) {

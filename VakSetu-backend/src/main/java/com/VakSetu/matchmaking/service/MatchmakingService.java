@@ -1,5 +1,6 @@
 package com.vaksetu.matchmaking.service;
 
+import com.vaksetu.common.constants.AppConstants;
 import com.vaksetu.common.enums.SessionType;
 import com.vaksetu.debate.dto.CreateDebateSessionRequest;
 import com.vaksetu.debate.dto.DebateSessionResponse;
@@ -174,15 +175,26 @@ public class MatchmakingService {
             DebateQueueEntry first,
             DebateQueueEntry second
     ) {
-        return Math.abs(first.getSkillSnapshot().getOverallScore()
-                - second.getSkillSnapshot().getOverallScore()) <= 15;
+        return Math.abs(normalizeOverallScore(first.getSkillSnapshot().getOverallScore())
+                - normalizeOverallScore(second.getSkillSnapshot().getOverallScore())) <= 15;
     }
 
     private boolean isOverallCompatible(
             RoleplayQueueEntry first,
             RoleplayQueueEntry second
     ) {
-        return Math.abs(first.getSkillSnapshot().getOverallScore()
-                - second.getSkillSnapshot().getOverallScore()) <= 15;
+        return Math.abs(normalizeOverallScore(first.getSkillSnapshot().getOverallScore())
+                - normalizeOverallScore(second.getSkillSnapshot().getOverallScore())) <= 15;
+    }
+
+    private double normalizeOverallScore(Double overallScore) {
+        if (overallScore == null) {
+            return AppConstants.INITIAL_OVERALL_SCORE;
+        }
+
+        return Math.max(
+                AppConstants.MIN_SKILL_SCORE,
+                Math.min(AppConstants.MAX_SKILL_SCORE, overallScore)
+        );
     }
 }

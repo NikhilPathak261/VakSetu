@@ -1,5 +1,6 @@
 package com.vaksetu.matchmaking.service;
 
+import com.vaksetu.common.constants.AppConstants;
 import com.vaksetu.matchmaking.dto.UserSkillSnapshot;
 import org.springframework.stereotype.Service;
 
@@ -39,12 +40,23 @@ public class MatchScoreCalculator {
     }
 
     private double calculateSimilarityScore(Double firstValue, Double secondValue) {
-        return 100 - Math.abs(firstValue - secondValue);
+        return AppConstants.MAX_SKILL_SCORE - Math.abs(normalize(firstValue) - normalize(secondValue));
     }
 
     private double calculateComplementScore(Double firstValue, Double secondValue) {
-        double difference = Math.abs(firstValue - secondValue);
+        double difference = Math.abs(normalize(firstValue) - normalize(secondValue));
 
         return difference * 0.5;
+    }
+
+    private double normalize(Double value) {
+        if (value == null) {
+            return AppConstants.INITIAL_SKILL_SCORE.doubleValue();
+        }
+
+        return Math.max(
+                AppConstants.MIN_SKILL_SCORE,
+                Math.min(AppConstants.MAX_SKILL_SCORE, value)
+        );
     }
 }

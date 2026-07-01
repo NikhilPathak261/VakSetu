@@ -49,14 +49,11 @@ public class MatchmakingController {
     @GetMapping("/debate/status")
     public QueueStatusResponse getDebateQueueStatus() {
         Long userId = getAuthenticatedUserId();
-        boolean queued = debateQueueService.getAllEntries()
-                .stream()
-                .anyMatch(entry -> entry.getUserId().equals(userId));
 
         return QueueStatusResponse.builder()
-                .queued(queued)
+                .queued(debateQueueService.containsUser(userId))
                 .queueType("DEBATE")
-                .queueSize(debateQueueService.getAllEntries().size())
+                .queueSize(debateQueueService.size())
                 .build();
     }
 
@@ -82,14 +79,11 @@ public class MatchmakingController {
     @GetMapping("/roleplay/status")
     public QueueStatusResponse getRoleplayQueueStatus() {
         Long userId = getAuthenticatedUserId();
-        boolean queued = roleplayQueueService.getAllEntries()
-                .stream()
-                .anyMatch(entry -> entry.getUserId().equals(userId));
 
         return QueueStatusResponse.builder()
-                .queued(queued)
+                .queued(roleplayQueueService.containsUser(userId))
                 .queueType("ROLEPLAY")
-                .queueSize(roleplayQueueService.getAllEntries().size())
+                .queueSize(roleplayQueueService.size())
                 .build();
     }
 

@@ -26,10 +26,6 @@ public class RoleplayQueueService {
     private final UserSkillRepository userSkillRepository;
 
     public void addUser(Long userId) {
-        if (queue.containsKey(userId)) {
-            throw new ConflictException("User already in roleplay queue");
-        }
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         UserSkill userSkill = userSkillRepository.findByUserId(userId)
@@ -41,7 +37,9 @@ public class RoleplayQueueService {
                 .joinedAt(LocalDateTime.now())
                 .build();
 
-        queue.put(userId, queueEntry);
+        if (queue.putIfAbsent(userId, queueEntry) != null) {
+            throw new ConflictException("User already in roleplay queue");
+        }
     }
 
     public void removeUser(Long userId) {
@@ -58,6 +56,14 @@ public class RoleplayQueueService {
 
     public Collection<RoleplayQueueEntry> getAllEntries() {
         return queue.values();
+    }
+
+    public boolean containsUser(Long userId) {
+        return queue.containsKey(userId);
+    }
+
+    public int size() {
+        return queue.size();
     }
 
     public int removeEntriesJoinedBefore(LocalDateTime cutoffTime) {
